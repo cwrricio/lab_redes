@@ -1,0 +1,80 @@
+# =============================================================================
+# Laboratório de Serviços de Aplicação: FTP, SSH e SNTP
+# Trabalho 2 de Redes de Computadores
+#
+# Sobe três servidores isolados em uma rede Docker dedicada (labnet) e expõe
+# as portas no host para que possamos usar clientes externos (FileZilla, ssh,
+# Wireshark, nosso cliente SNTP em Python).
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # SSH — acesso remoto seguro (porta 22 -> 2222 no host)
+  # ---------------------------------------------------------------------------
+  ssh:
+    build: ./services/ssh
+    container_name: lab-ssh
+    hostname: ssh-server
+    ports:
+      - "2222:22"            # 2222 no host para não colidir com um sshd local
+    volumes:
+      # Chave pública do cliente injetada para autenticação por chave.
+      - ./client/keys/lab_ed25519.pub:/keys/authorized_key.pub:ro
+      # Chaves de host FIXAS: a fingerprint não muda a cada rebuild, então o
+      # known_hosts do cliente continua válido (sem alarme falso de MITM).
+      - ./client/keys/host:/hostkeys:ro
+    networks:
+      labnet:
+        ipv4_address: 172.30.0.10
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # FTP — transferência de arquivos (vsftpd)
+  # Porta de controle 21 + faixa passiva 21100-21110.
+  # ---------------------------------------------------------------------------
+  ftp:
+    build: ./services/ftp
+    container_name: lab-ftp
+    hostname: ftp-server
+    environment:
+      FTP_USER: ftpuser
+      FTP_PASS: ftppass
+      # Endereço anunciado nas respostas PASV. Como acessamos via host,
+      # precisa ser o IP que o cliente enxerga (127.0.0.1 para acesso local).
+      PASV_ADDRESS: 127.0.0.1
+    ports:
+      - "21:21"              # canal de controle
+      - "21100-21110:21100-21110"   # canais de dados (modo passivo)
+    volumes:
+      - ./services/ftp/data:/home/ftpuser
+    networks:
+      labnet:
+        ipv4_address: 172.30.0.20
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # NTP/SNTP — servidor de horário (chrony) na porta 123/UDP
+  # ---------------------------------------------------------------------------
+  ntp:
+    build: ./services/ntp
+    container_name: lab-ntp
+    hostname: ntp-server
+    ports:
+      - "123:123/udp"
+    networks:
+      labnet:
+        ipv4_address: 172.30.0.30
+    # NTP precisa ler o relógio do sistema; em alguns hosts SYS_TIME ajuda,
+    # mas aqui o chrony só SERVE a hora, não disciplina o relógio do host.
+    cap_add:
+      - SYS_TIME
+    restart: unless-stopped
+
+networks:
+  labnet:
+    name: labnet
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

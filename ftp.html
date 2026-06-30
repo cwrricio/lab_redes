@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTP - File Transfer Protocol . Laboratorio de Redes</title>
+<style>
+  :root {
+    --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;
+    --text:#e6edf3;--muted:#8b949e;--blue:#58a6ff;--green:#3fb950;
+    --yellow:#d29922;--red:#f85149;--purple:#bc8cff;--cyan:#39d353;
+    --orange:#f0883e;--accent:#1f6feb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;height:100vh;overflow:hidden}
+  #deck{width:100%;height:100vh;position:relative}
+  .slide{display:none;position:absolute;inset:0;padding:52px 80px 36px;flex-direction:column;justify-content:center;gap:22px;animation:fi .22s ease}
+  .slide.active{display:flex}
+  @keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+  h1{font-size:3rem;font-weight:800;line-height:1.15}
+  h2{font-size:2rem;font-weight:700;color:var(--blue);line-height:1.2}
+  h3{font-size:1.1rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  p,li{font-size:1.05rem;line-height:1.65;color:var(--text)}
+  ul,ol{padding-left:1.4em;display:flex;flex-direction:column;gap:10px}
+  strong{color:var(--blue);font-weight:700}
+  em{color:var(--yellow);font-style:normal;font-weight:600}
+  .muted{color:var(--muted);font-size:.92rem}
+  code{font-family:"JetBrains Mono","Fira Code",monospace;font-size:.87em;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;color:var(--cyan)}
+  pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 22px;overflow-x:auto;font-family:"JetBrains Mono","Fira Code",monospace;font-size:.83rem;line-height:1.6;color:var(--cyan)}
+  pre .cm{color:var(--muted)} pre .cd{color:var(--green)} pre .fl{color:var(--orange)} pre .vl{color:var(--yellow)} pre .out{color:var(--muted)} pre .hi{color:var(--blue);font-weight:700}
+  .grid{display:grid;gap:14px} .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 22px;display:flex;flex-direction:column;gap:7px}
+  .card h4{font-size:.98rem;color:var(--blue);font-weight:700} .card p{font-size:.9rem;color:var(--muted);line-height:1.5}
+  .cl{border-radius:8px;padding:13px 18px;font-size:.95rem;line-height:1.6}
+  .info{background:#1c2a3e;border-left:3px solid var(--blue)}
+  .warn{background:#2d2008;border-left:3px solid var(--yellow)}
+  .danger{background:#2d1212;border-left:3px solid var(--red)}
+  .ok{background:#0d2818;border-left:3px solid var(--green)}
+  table{width:100%;border-collapse:collapse;font-size:.93rem}
+  th{background:var(--bg3);color:var(--blue);font-weight:700;padding:9px 15px;text-align:left;border-bottom:2px solid var(--border)}
+  td{padding:9px 15px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.78rem;font-weight:700}
+  .tg{background:#0d2818;color:var(--green)} .tr{background:#2d1212;color:var(--red)} .tb{background:#1c2a3e;color:var(--blue)} .ty{background:#2d2008;color:var(--yellow)}
+  .title-slide{justify-content:center;text-align:center}
+  .pill{display:inline-block;background:var(--accent);color:#fff;padding:4px 13px;border-radius:20px;font-size:.83rem;font-weight:600;margin-bottom:14px}
+  .div{width:56px;height:3px;background:var(--blue);border-radius:2px;margin:14px auto}
+  .subtitle{font-size:1.25rem;color:var(--muted);margin-top:7px}
+  #nav{position:fixed;bottom:18px;right:22px;display:flex;align-items:center;gap:11px;z-index:100}
+  #counter{color:var(--muted);font-size:.83rem;font-family:monospace}
+  .nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s}
+  .nb:hover{background:var(--bg3);border-color:var(--blue)}
+  #prog{position:fixed;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease;z-index:200}
+</style>
+</head>
+<body>
+<div id="deck">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide title-slide active" id="s1">
+    <div class="pill">Trabalho 2 - Redes de Computadores</div>
+    <h1>FTP</h1>
+    <h2 style="color:var(--muted)">File Transfer Protocol</h2>
+    <div class="div"></div>
+    <p class="subtitle">Transferencia de arquivos, dois canais, modo passivo</p>
+    <p class="muted">RFC 959 (1985) | Porta 21 | TCP</p>
+  </div>
+
+  <!-- SLIDE 2: Context -->
+  <div class="slide" id="s2">
+    <h3>Contexto</h3>
+    <h2>O protocolo mais antigo ainda em uso</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4>FTP em 1985 (RFC 959)</h4>
+        <p>Criado para transferir arquivos entre computadores. Foi o jeito padrao de publicar sites, softwares e dados por decadas.</p>
+      </div>
+      <div class="card">
+        <h4>Por que ainda importa</h4>
+        <p>Aparece em hospedagem legada, equipamentos industriais e roteadores antigos. E um caso de estudo classico de seguranca em protocolos de rede.</p>
+      </div>
+    </div>
+    <div class="cl warn">FTP foi projetado para funcionar, nao para ser seguro. Toda a comunicacao, incluindo usuario e senha, vai em texto claro pela rede.</div>
+    <p class="muted">O mesmo RFC 959 de 1985 ainda descreve o protocolo usado hoje. Muito pouco mudou.</p>
+  </div>
+
+  <!-- SLIDE 3: Two channels -->
+  <div class="slide" id="s3">
+    <h3>Conceito Central</h3>
+    <h2>Dois canais TCP independentes</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>A marca registrada do FTP e usar dois canais TCP separados para a mesma sessao.</p>
+        <div class="card" style="border-top:2px solid var(--blue)">
+          <h4>Canal de Controle (porta 21)</h4>
+          <p>Fica aberto a sessao toda. Aqui trafegam os comandos: USER, PASS, LIST, RETR, STOR, PASV, QUIT.</p>
+        </div>
+        <div class="card" style="border-top:2px solid var(--green)">
+          <h4>Canal de Dados (porta variavel)</h4>
+          <p>Aberto e fechado a cada transferencia ou listagem. O conteudo do arquivo passa por aqui.</p>
+        </div>
+        <div class="cl info">Os codigos de resposta sao numericos, como no HTTP: 220 pronto, 331 peca senha, 230 logado, 150 abrindo dados, 226 transferencia ok.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># Dialogo FTP capturado com curl -v</span>
+
+<span class="out">> </span><span class="hi">USER ftpuser</span>
+<span class="out">< 331 Please specify the password.</span>
+<span class="out">> </span><span class="hi">PASS ftppass</span>
+<span class="out">< 230 Login successful.</span>
+<span class="out">> PWD</span>
+<span class="out">< 257 "/" is the current directory</span>
+<span class="out">> PASV</span>
+<span class="out">< 227 Entering Passive Mode (127,0,0,1,82,113).</span>
+<span class="out">> LIST</span>
+<span class="out">< 150 Here comes the directory listing.</span>
+<span class="out">< 226 Directory send OK.</span>
+<span class="cd">-rw-r--r-- exemplo.txt</span>
+<span class="cd">-rw-r--r-- upload.txt</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: Active vs Passive -->
+  <div class="slide" id="s4">
+    <h3>Modos de Transferencia</h3>
+    <h2>Modo Ativo vs. Modo Passivo</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>O canal de dados precisa ser estabelecido de alguma forma. Ha dois modos:</p>
+        <div class="card" style="border-top:2px solid var(--red)">
+          <h4>Modo Ativo (comando PORT)</h4>
+          <p>O servidor abre conexao de volta para o cliente na porta que ele anunciar. Quebra com NAT e firewall do lado do cliente. Quase nao funciona mais.</p>
+        </div>
+        <div class="card" style="border-top:2px solid var(--green)">
+          <h4>Modo Passivo (comando PASV)</h4>
+          <p>O servidor abre uma porta e informa o cliente. O cliente e quem conecta. Funciona atraves de NAT e firewall. E o modo usado hoje.</p>
+        </div>
+        <div class="cl info">No nosso lab fixamos a faixa passiva em 21100-21110 para conseguir mapear no Docker. Sem isso, o servidor sortearia qualquer porta alta e o NAT nao saberia encaminhar.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># Modo Ativo (problematico com NAT):</span>
+<span class="cm"># Servidor conecta DE VOLTA ao cliente</span>
+<span class="fl">Client:</span>  PORT 192,168,1,5,20,50
+<span class="fl">Server:</span>  (conecta em 192.168.1.5:5170)
+
+<span class="cm"># Modo Passivo (funciona com NAT):</span>
+<span class="fl">Client:</span>  PASV
+<span class="fl">Server:</span>  227 Entering Passive Mode
+         (127,0,0,1,82,113)
+         <span class="cm"># porta = 82*256 + 113 = 21105</span>
+
+<span class="fl">Client:</span>  (conecta em 127.0.0.1:21105)
+
+<span class="cm"># Nosso lab: faixa fixa 21100-21110</span>
+<span class="cm"># docker-compose.yml:</span>
+<span class="vl">ports:</span>
+  - <span class="cd">"21:21"</span>
+  - <span class="cd">"21100-21110:21100-21110"</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: Port and server -->
+  <div class="slide" id="s5">
+    <h3>Rede</h3>
+    <h2>Porta 21 e a faixa passiva</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <ul>
+          <li>Porta 21 e a porta well-known do canal de controle (IANA). Portas 0-1023 sao reservadas a servicos padrao.</li>
+          <li>O canal de dados usa uma porta negociada: no modo passivo, o servidor escolhe e informa o cliente via PASV.</li>
+          <li>Para funcionar com Docker e NAT, a faixa passiva precisa ser fixa e mapeada.</li>
+          <li>O FTP usa TCP nos dois canais: precisa de entrega confiavel e ordenada para os arquivos.</li>
+        </ul>
+        <div class="cl info">Por que dois canais e nao um? Design original de 1985: separar comandos de dados permite que o controle permita continuar enquanto o arquivo transfere. Mas complica firewalls e NAT.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># Portas do laboratorio</span>
+docker compose port ftp 21
+<span class="cd">0.0.0.0:21</span>
+
+<span class="cm"># Canal de controle: sempre 21</span>
+<span class="cm"># Canal de dados: faixa 21100-21110</span>
+<span class="cm"># (negociado via PASV)</span>
+
+<span class="cm"># Ver o servidor escutando (dentro do container):</span>
+ss -ltn
+<span class="cd">LISTEN  0.0.0.0:21    </span><span class="cm"># controle</span>
+
+<span class="cm"># Durante transferencia:</span>
+<span class="cd">LISTEN  0.0.0.0:21105 </span><span class="cm"># dados (PASV)</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Authentication -->
+  <div class="slide" id="s6">
+    <h3>Autenticacao</h3>
+    <h2>Usuario e senha em texto claro</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>A autenticacao no FTP e feita pelos comandos USER e PASS no canal de controle.</p>
+        <div class="cl danger">Usuario, senha e conteudo dos arquivos viajam em TEXTO CLARO. Qualquer pessoa na mesma rede captura com um sniffer. No Wireshark, filtre por 'ftp' e voce le USER e PASS diretamente.</div>
+        <div class="cl warn">Nao ha como melhorar isso no FTP puro. Para criptografia, e preciso trocar o protocolo: FTPS ou SFTP.</div>
+        <p class="muted">Filtro Wireshark: ftp (ver comandos) | ftp-data (ver conteudo dos arquivos)</p>
+      </div>
+      <div>
+        <pre><span class="cm"># O que o Wireshark captura no FTP:</span>
+
+<span class="cm"># Canal de controle (porta 21):</span>
+&gt; <span class="hi">USER ftpuser</span>        <span class="cm">&lt;- visivel em claro</span>
+&gt; <span class="hi">PASS ftppass</span>        <span class="cm">&lt;- visivel em claro</span>
+&lt; 230 Login OK
+
+&gt; RETR exemplo.txt
+&lt; 150 Opening connection
+&lt; 226 Transfer complete
+
+<span class="cm"># Canal de dados (porta 21100-21110):</span>
+<span class="out">(conteudo do arquivo em texto claro)</span>
+
+<span class="cm"># Compare com o SSH:</span>
+<span class="out"># Encrypted Packet (len=412) &lt;- so ruido</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: Upload and download -->
+  <div class="slide" id="s7">
+    <h3>Transferencia</h3>
+    <h2>Upload e download de arquivos</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>Os principais comandos de transferencia no protocolo FTP:</p>
+        <table>
+          <thead>
+            <tr><th>Comando</th><th>Direcao</th><th>Descricao</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>RETR</code> (retrieve)</td><td>Remoto para local</td><td>Download de arquivo</td></tr>
+            <tr><td><code>STOR</code> (store)</td><td>Local para remoto</td><td>Upload de arquivo</td></tr>
+            <tr><td><code>LIST</code></td><td>-</td><td>Lista o diretorio</td></tr>
+            <tr><td><code>DELE</code></td><td>-</td><td>Remove arquivo no servidor</td></tr>
+            <tr><td><code>MKD</code></td><td>-</td><td>Cria diretorio</td></tr>
+            <tr><td><code>PWD</code></td><td>-</td><td>Diretorio atual</td></tr>
+          </tbody>
+        </table>
+        <div class="cl info">Cada transferencia abre um novo canal de dados, transfere e fecha. O canal de controle permanece aberto.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># Upload: LOCAL para REMOTO</span>
+curl --ftp-pasv \
+  -T /tmp/arquivo.txt \
+  <span class="fl">ftp://ftpuser:ftppass@127.0.0.1/arquivo.txt</span>
+
+<span class="cm"># Download: REMOTO para LOCAL</span>
+curl --ftp-pasv \
+  <span class="fl">ftp://ftpuser:ftppass@127.0.0.1/exemplo.txt</span> \
+  -o /tmp/baixado.txt
+
+<span class="cm"># Listagem</span>
+curl --ftp-pasv \
+  <span class="fl">ftp://ftpuser:ftppass@127.0.0.1/</span>
+
+<span class="cm"># Via FileZilla:</span>
+<span class="cm"># Host: 127.0.0.1  Porta: 21</span>
+<span class="cm"># Usuario: ftpuser  Senha: ftppass</span>
+<span class="cm"># Modo: Passivo (sempre)</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Permissions and chroot -->
+  <div class="slide" id="s8">
+    <h3>Seguranca no Servidor</h3>
+    <h2>Permissoes e isolamento (chroot)</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>O vsftpd oferece mecanismos de isolamento para limitar o que um usuario pode acessar.</p>
+        <div class="card" style="border-top:2px solid var(--green)">
+          <h4>chroot_local_user</h4>
+          <p>Prende o usuario no proprio diretorio home. Ele nao ve o resto do sistema de arquivos. Uma jaula: se a conta vazar, o estrago fica contido.</p>
+        </div>
+        <div class="card" style="border-top:2px solid var(--blue)">
+          <h4>local_umask=022</h4>
+          <p>Arquivos enviados nascem com permissao 644 (dono escreve, demais so leem). Controla quem pode ler os arquivos enviados.</p>
+        </div>
+        <div class="cl warn">O chroot nao substitui a criptografia. O usuario fica preso no diretorio, mas as credenciais e os arquivos ainda viajam em claro pela rede.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># vsftpd.conf (nosso lab)</span>
+<span class="vl">chroot_local_user</span>=<span class="cd">YES</span>
+<span class="vl">allow_writeable_chroot</span>=<span class="cd">YES</span>
+<span class="vl">local_umask</span>=<span class="cd">022</span>
+
+<span class="cm"># Resultado: usuario preso no home</span>
+ftpuser@servidor:~$ cd /etc
+<span class="out">550 Failed to change directory.</span>
+
+<span class="cm"># Arquivos enviados: permissao 644</span>
+ls -la /home/ftpuser/
+<span class="cd">-rw-r--r-- 1 ftpuser ftpuser 59 exemplo.txt</span>
+<span class="cd">-rw-r--r-- 1 ftpuser ftpuser 57 upload.txt</span>
+<span class="cm">#           ^ 644: dono rw, outros r</span>
+
+<span class="cm"># Verificar dentro do container:</span>
+docker compose exec ftp ls -la /home/ftpuser</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: FTPS vs SFTP -->
+  <div class="slide" id="s9">
+    <h3>Alternativas Seguras</h3>
+    <h2>FTPS e SFTP: como resolver o texto claro</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>O FTP puro nao tem criptografia. Ha duas solucoes, com arquiteturas bem diferentes:</p>
+        <div class="card" style="border-left:3px solid var(--blue)">
+          <h4>FTPS (FTP + TLS)</h4>
+          <p>FTP tradicional com uma camada TLS sobre os dois canais. Ainda usa porta 21 e a faixa passiva. Mais complexo de configurar em firewall. Requer certificado TLS. (ssl_enable=YES no vsftpd)</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green)">
+          <h4>SFTP (SSH File Transfer Protocol)</h4>
+          <p>Nao e FTP. E um subsistema do SSH. Um unico canal cifrado na porta 22. Muito mais simples de configurar. Ja demonstrado no lab de SSH.</p>
+        </div>
+        <div class="cl warn">SFTP e FTPS sao frequentemente confundidos. Nomes parecidos, arquiteturas completamente diferentes.</div>
+      </div>
+      <div>
+        <pre><span class="cm"># FTPS: FTP com TLS</span>
+<span class="cm"># (vsftpd.conf)</span>
+<span class="vl">ssl_enable</span>=<span class="cd">YES</span>
+<span class="vl">rsa_cert_file</span>=<span class="fl">/etc/ssl/cert.pem</span>
+<span class="vl">rsa_private_key_file</span>=<span class="fl">/etc/ssl/key.pem</span>
+<span class="cm"># ainda usa porta 21 + faixa passiva</span>
+
+<span class="cm"># SFTP: subsistema do SSH</span>
+<span class="cm"># (ja disponivel no lab de SSH)</span>
+sftp -F client/ssh_config lab
+
+sftp&gt; ls
+sftp&gt; put /tmp/arquivo.txt
+sftp&gt; get remoto.txt /tmp/
+sftp&gt; bye
+
+<span class="cm"># Comparativo:</span>
+<span class="cm"># FTP:  porta 21 + 21100-21110, texto claro</span>
+<span class="cm"># FTPS: porta 21 + 21100-21110, cifrado com TLS</span>
+<span class="cm"># SFTP: porta 22 apenas, cifrado com SSH</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Comparison table -->
+  <div class="slide" id="s10">
+    <h3>Comparativo</h3>
+    <h2>FTP, FTPS e SFTP lado a lado</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Protocolo</th>
+          <th>Porta(s)</th>
+          <th>Canais</th>
+          <th>Cifrado</th>
+          <th>Senha na rede</th>
+          <th>Recomendado hoje</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>FTP</strong></td>
+          <td>21 + dados</td>
+          <td>2 canais TCP</td>
+          <td><span class="tag tr">Nao</span></td>
+          <td><span class="tag tr">Texto claro</span></td>
+          <td><span class="tag tr">Nao</span></td>
+        </tr>
+        <tr>
+          <td><strong>FTPS</strong></td>
+          <td>21 + dados</td>
+          <td>2 canais TCP + TLS</td>
+          <td><span class="tag tg">Sim</span></td>
+          <td><span class="tag tg">Cifrada</span></td>
+          <td><span class="tag ty">Complexo</span></td>
+        </tr>
+        <tr>
+          <td><strong>SFTP</strong></td>
+          <td>22</td>
+          <td>1 canal SSH</td>
+          <td><span class="tag tg">Sim</span></td>
+          <td><span class="tag tg">Cifrada</span></td>
+          <td><span class="tag tg">Sim</span></td>
+        </tr>
+        <tr>
+          <td><strong>SSH/SCP</strong></td>
+          <td>22</td>
+          <td>1 canal SSH</td>
+          <td><span class="tag tg">Sim</span></td>
+          <td><span class="tag tg">Cifrada</span></td>
+          <td><span class="tag tg">Sim</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="cl ok">Para novos sistemas, SFTP (sobre SSH) e a escolha mais simples e segura. Um canal, uma porta, sem complicacao de firewall.</div>
+  </div>
+
+  <!-- SLIDE 11: Protocol session summary -->
+  <div class="slide" id="s11">
+    <h3>Resumo do Protocolo</h3>
+    <h2>O que acontece numa sessao FTP</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Passo</th>
+          <th>Comando (cliente)</th>
+          <th>Resposta (servidor)</th>
+          <th>Canal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Conectar</td>
+          <td><span class="muted">(TCP connect)</span></td>
+          <td>220 Bem-vindo</td>
+          <td><span class="tag tb">Controle</span></td>
+        </tr>
+        <tr>
+          <td>Usuario</td>
+          <td><code>USER ftpuser</code></td>
+          <td>331 Informe a senha</td>
+          <td><span class="tag tb">Controle</span></td>
+        </tr>
+        <tr>
+          <td>Senha</td>
+          <td><code>PASS ftppass</code></td>
+          <td>230 Login ok</td>
+          <td><span class="tag tb">Controle</span></td>
+        </tr>
+        <tr>
+          <td>Solicitar passivo</td>
+          <td><code>PASV</code></td>
+          <td>227 Porta 21105</td>
+          <td><span class="tag tb">Controle</span></td>
+        </tr>
+        <tr>
+          <td>Listar</td>
+          <td><code>LIST</code></td>
+          <td>150 Abrindo... / 226 OK</td>
+          <td><span class="tag tg">Dados (21105)</span></td>
+        </tr>
+        <tr>
+          <td>Baixar</td>
+          <td><code>RETR arquivo.txt</code></td>
+          <td>150 Abrindo... / 226 OK</td>
+          <td><span class="tag tg">Dados (21105)</span></td>
+        </tr>
+        <tr>
+          <td>Enviar</td>
+          <td><code>STOR novo.txt</code></td>
+          <td>150 Abrindo... / 226 OK</td>
+          <td><span class="tag tg">Dados (nova porta)</span></td>
+        </tr>
+        <tr>
+          <td>Sair</td>
+          <td><code>QUIT</code></td>
+          <td>221 Ate logo</td>
+          <td><span class="tag tb">Controle</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SLIDE 12: Wireshark -->
+  <div class="slide" id="s12">
+    <h3>Analise de Trafego</h3>
+    <h2>FTP no Wireshark</h2>
+    <div class="grid g2">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <p>O FTP e o protocolo mais didatico para analisar no Wireshark: tudo e legivel.</p>
+        <table>
+          <thead>
+            <tr><th>Filtro</th><th>O que voce ve</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>ftp</code></td><td>Todos os comandos do canal de controle: USER, PASS, RETR, STOR, PASV</td></tr>
+            <tr><td><code>ftp-data</code></td><td>O conteudo dos arquivos transferidos em texto claro</td></tr>
+            <tr><td><code>ftp.request.command == "PASS"</code></td><td>So os comandos de senha (muito direto)</td></tr>
+          </tbody>
+        </table>
+        <div class="cl danger">Aplicar o filtro 'ftp' durante uma sessao real mostra a senha do usuario em claro. E a demonstracao mais direta do problema de seguranca do FTP.</div>
+        <p class="muted">Interface para captura: Loopback (lo). Filtro de captura: port 21 or portrange 21100-21110</p>
+      </div>
+      <div>
+        <pre><span class="cm"># Wireshark - filtro: ftp</span>
+
+Frame: FTP Request: USER ftpuser
+Frame: FTP Response: 331 Please specify...
+Frame: FTP Request: <span class="hi">PASS ftppass</span>      <span class="cm">&lt;- senha!</span>
+Frame: FTP Response: 230 Login OK
+Frame: FTP Request: PASV
+Frame: FTP Response: 227 Passive Mode
+Frame: FTP Request: RETR exemplo.txt
+Frame: FTP Response: 150 Opening...
+Frame: FTP Response: 226 Transfer OK
+
+<span class="cm"># filtro: ftp-data</span>
+<span class="cm"># (conteudo do arquivo visivel em claro)</span>
+<span class="cd">Arquivo de exemplo servido via FTP</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 13: Demo -->
+  <div class="slide title-slide" id="s13">
+    <div class="pill">Demonstracao ao vivo</div>
+    <h1>Demo</h1>
+    <div class="div" style="background:var(--green)"></div>
+    <p class="muted">make ftp</p>
+    <p class="muted">Terminal 2: docker logs -f lab-ftp</p>
+  </div>
+
+  <!-- SLIDE 14: Limitations -->
+  <div class="slide" id="s14">
+    <h3>Limitacoes do Experimento</h3>
+    <h2>O que ficou de fora</h2>
+    <ul>
+      <li>FTP em texto claro de proposito: mantivemos para capturar a senha no Wireshark e demonstrar o problema. Em producao, use SFTP ou FTPS.</li>
+      <li>Tudo em loopback (127.0.0.1): em um cenario real, cliente e servidor estao em maquinas diferentes. O pasv_address precisaria ser o IP real do host.</li>
+      <li>Sem TLS (FTPS): configurar FTPS exige certificado e ajustes de firewall para os dois canais. Ficou fora do escopo.</li>
+      <li>Sem rate limiting nem cotas de disco: itens de producao nao implementados no lab.</li>
+      <li>Usuario unico: em um servidor real, cada usuario teria seu proprio chroot e permissoes especificas.</li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 15: Conclusion -->
+  <div class="slide title-slide" id="s15">
+    <h2 style="color:var(--muted);font-size:1rem;text-transform:uppercase;letter-spacing:.08em">Conclusao</h2>
+    <h1>FTP: dois canais, texto claro, legado.</h1>
+    <div class="div"></div>
+    <div class="grid g3" style="max-width:850px;margin:0 auto;text-align:left">
+      <div class="card">
+        <h4>Dois canais</h4>
+        <p>Canal de controle na porta 21 e canal de dados na faixa passiva. Mais complexo que protocolos modernos.</p>
+      </div>
+      <div class="card">
+        <h4>Modo passivo</h4>
+        <p>PASV resolve o problema de NAT e firewall. E o modo necessario para funcionar na internet moderna.</p>
+      </div>
+      <div class="card">
+        <h4>Use SFTP hoje</h4>
+        <p>Para transferencia segura, SFTP (sobre SSH) e a escolha correta. Um canal, cifrado, sem complexidade.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:28px">RFC 959 (1985) | make up &amp;&amp; make ftp</p>
+  </div>
+
+</div>
+
+<div id="nav"><span id="counter">1 / 15</span><button class="nb" id="prev">&#x2039;</button><button class="nb" id="next">&#x203a;</button></div>
+<div id="prog"></div>
+
+<script>
+const slides=Array.from(document.querySelectorAll('.slide'));
+const total=slides.length;let cur=0;
+function show(n){slides[cur].classList.remove('active');cur=Math.max(0,Math.min(total-1,n));slides[cur].classList.add('active');document.getElementById('counter').textContent=`${cur+1} / ${total}`;document.getElementById('prog').style.width=`${(cur+1)/total*100}%`;}
+document.getElementById('prev').onclick=()=>show(cur-1);
+document.getElementById('next').onclick=()=>show(cur+1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(cur+1);if(e.key==='ArrowLeft')show(cur-1);if(e.key==='Home')show(0);if(e.key==='End')show(total-1);});
+let tx=null;document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)show(dx<0?cur+1:cur-1);tx=null;});
+show(0);
+</script>
+</body>
+</html>

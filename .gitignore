@@ -1,0 +1,17 @@
+# Chaves privadas — nunca versionar
+client/keys/
+# ssh_config é gerado com caminhos absolutos da máquina
+client/ssh_config
+
+# Capturas geradas
+captures/*.pcap
+
+# Dados de runtime do FTP (mantém só o .gitkeep)
+services/ftp/data/*
+!services/ftp/data/.gitkeep
+
+# Python / uv
+client/.venv/
+__pycache__/
+*.pyc
+client/uv.lock

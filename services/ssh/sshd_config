@@ -1,0 +1,40 @@
+# Configuração do servidor SSH para o laboratório.
+# Comentada para servir de material de apresentação.
+
+Port 22
+AddressFamily any
+
+# --- Chaves de host -------------------------------------------------------
+# São geradas no primeiro boot (entrypoint). Identificam o SERVIDOR para o
+# cliente e são a base da proteção contra ataque man-in-the-middle: o cliente
+# guarda a fingerprint em ~/.ssh/known_hosts.
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+
+# --- Autenticação ---------------------------------------------------------
+# Mantemos os dois métodos LIGADOS para demonstrar ambos. Em produção o
+# recomendado é desligar a senha (PasswordAuthentication no) e usar só chave.
+PubkeyAuthentication yes
+PasswordAuthentication yes
+PermitRootLogin no
+AuthorizedKeysFile .ssh/authorized_keys
+
+# --- Endurecimento (hardening) -------------------------------------------
+# MaxAuthTries baixo (ex.: 3) é mais seguro, mas faz o login MANUAL falhar com
+# "Too many authentication failures" quando o ssh-agent oferece várias chaves
+# antes da senha. Deixamos 6 para a aula fluir; em produção, use 3 + só chave.
+MaxAuthTries 6
+LoginGraceTime 30
+X11Forwarding no
+ClientAliveInterval 60
+ClientAliveCountMax 3
+
+# Algoritmos modernos (troca de chaves, cifras e MAC) — base da
+# confidencialidade e integridade do canal.
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+
+# Logs detalhados ajudam a ver o handshake na demonstração.
+LogLevel VERBOSE
+Subsystem sftp /usr/lib/openssh/sftp-server
