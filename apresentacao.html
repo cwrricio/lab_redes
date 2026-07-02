@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SSH - Secure Shell . Laboratorio de Redes</title>
+<title>FTP · SSH · SNTP · Laboratório de Redes</title>
 <style>
   :root {
     --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--border:#30363d;
@@ -14,604 +14,473 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;height:100vh;overflow:hidden}
   #deck{width:100%;height:100vh;position:relative}
-  .slide{display:none;position:absolute;inset:0;padding:52px 80px 36px;flex-direction:column;justify-content:center;gap:22px;animation:fi .22s ease}
+  .slide{display:none;position:absolute;inset:0;padding:46px 76px 40px;flex-direction:column;justify-content:center;gap:18px;animation:fi .22s ease}
   .slide.active{display:flex}
   @keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-  h1{font-size:3rem;font-weight:800;line-height:1.15}
-  h2{font-size:2rem;font-weight:700;color:var(--blue);line-height:1.2}
-  h3{font-size:1.1rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-  p,li{font-size:1.05rem;line-height:1.65;color:var(--text)}
-  ul,ol{padding-left:1.4em;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:2.9rem;font-weight:800;line-height:1.15}
+  h2{font-size:1.9rem;font-weight:700;color:var(--blue);line-height:1.2}
+  h3{font-size:1rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  p,li{font-size:1.02rem;line-height:1.6;color:var(--text)}
+  ul,ol{padding-left:1.4em;display:flex;flex-direction:column;gap:8px}
   strong{color:var(--blue);font-weight:700}
   em{color:var(--yellow);font-style:normal;font-weight:600}
-  .muted{color:var(--muted);font-size:.92rem}
-  code{font-family:"JetBrains Mono","Fira Code",monospace;font-size:.87em;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;color:var(--cyan)}
-  pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:18px 22px;overflow-x:auto;font-family:"JetBrains Mono","Fira Code",monospace;font-size:.83rem;line-height:1.6;color:var(--cyan)}
-  pre .cm{color:var(--muted)} pre .cd{color:var(--green)} pre .fl{color:var(--orange)} pre .vl{color:var(--yellow)} pre .out{color:var(--muted)} pre .hi{color:var(--blue);font-weight:700}
-  .grid{display:grid;gap:14px} .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr}
-  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 22px;display:flex;flex-direction:column;gap:7px}
-  .card h4{font-size:.98rem;color:var(--blue);font-weight:700} .card p{font-size:.9rem;color:var(--muted);line-height:1.5}
-  .cl{border-radius:8px;padding:13px 18px;font-size:.95rem;display:flex;align-items:flex-start;gap:11px}
-  .cl-ic{font-size:1.1rem;flex-shrink:0;margin-top:2px} .cl-tx{line-height:1.6}
+  .muted{color:var(--muted);font-size:.9rem}
+  code{font-family:"JetBrains Mono","Fira Code",monospace;font-size:.86em;background:var(--bg3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;color:var(--cyan)}
+  pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:15px 18px;overflow-x:auto;font-family:"JetBrains Mono","Fira Code",monospace;font-size:.8rem;line-height:1.55;color:var(--cyan)}
+  pre .cm{color:var(--muted)} pre .cd{color:var(--green)} pre .fl{color:var(--orange)} pre .vl{color:var(--yellow)} pre .out{color:var(--muted)} pre .hi{color:var(--blue);font-weight:700} pre .rd{color:var(--red)}
+  .grid{display:grid;gap:13px} .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:15px 18px;display:flex;flex-direction:column;gap:6px}
+  .card h4{font-size:.96rem;color:var(--blue);font-weight:700} .card p{font-size:.88rem;color:var(--muted);line-height:1.5}
+  .card.srv{border-top:3px solid var(--purple)} .card.srv h4{color:var(--purple)}
+  .card.cli{border-top:3px solid var(--green)} .card.cli h4{color:var(--green)}
+  .cl{border-radius:8px;padding:11px 16px;font-size:.92rem;display:flex;align-items:flex-start;gap:10px}
+  .cl-ic{font-size:1.05rem;flex-shrink:0;margin-top:1px} .cl-tx{line-height:1.55}
   .info{background:#1c2a3e;border-left:3px solid var(--blue)}
   .warn{background:#2d2008;border-left:3px solid var(--yellow)}
   .danger{background:#2d1212;border-left:3px solid var(--red)}
   .ok{background:#0d2818;border-left:3px solid var(--green)}
-  table{width:100%;border-collapse:collapse;font-size:.93rem}
-  th{background:var(--bg3);color:var(--blue);font-weight:700;padding:9px 15px;text-align:left;border-bottom:2px solid var(--border)}
-  td{padding:9px 15px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th{background:var(--bg3);color:var(--blue);font-weight:700;padding:8px 14px;text-align:left;border-bottom:2px solid var(--border)}
+  td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
   tr:last-child td{border-bottom:none}
-  .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.78rem;font-weight:700}
-  .tg{background:#0d2818;color:var(--green)} .tr{background:#2d1212;color:var(--red)} .tb{background:#1c2a3e;color:var(--blue)} .ty{background:#2d2008;color:var(--yellow)}
+  .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.76rem;font-weight:700}
+  .tg{background:#0d2818;color:var(--green)} .tr{background:#2d1212;color:var(--red)} .tb{background:#1c2a3e;color:var(--blue)} .ty{background:#2d2008;color:var(--yellow)} .tp{background:#241a38;color:var(--purple)}
   .title-slide{justify-content:center;text-align:center}
-  .pill{display:inline-block;background:var(--accent);color:#fff;padding:4px 13px;border-radius:20px;font-size:.83rem;font-weight:600;margin-bottom:14px}
+  .pill{display:inline-block;background:var(--accent);color:#fff;padding:4px 13px;border-radius:20px;font-size:.82rem;font-weight:600;margin-bottom:14px}
   .div{width:56px;height:3px;background:var(--blue);border-radius:2px;margin:14px auto}
-  .subtitle{font-size:1.25rem;color:var(--muted);margin-top:7px}
+  .subtitle{font-size:1.2rem;color:var(--muted);margin-top:7px}
+  .step{display:inline-block;background:var(--accent);color:#fff;font-size:.8rem;font-weight:700;padding:2px 10px;border-radius:6px;margin-right:8px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
   #nav{position:fixed;bottom:18px;right:22px;display:flex;align-items:center;gap:11px;z-index:100}
   #counter{color:var(--muted);font-size:.83rem;font-family:monospace}
   .nb{background:var(--bg2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s}
   .nb:hover{background:var(--bg3);border-color:var(--blue)}
   #prog{position:fixed;bottom:0;left:0;height:3px;background:var(--blue);transition:width .3s ease;z-index:200}
+  .sec{position:fixed;top:16px;left:76px;font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);z-index:100}
 </style>
 </head>
 <body>
 <div id="deck">
 
-  <!-- SLIDE 1: Title -->
+  <!-- 1 TITLE -->
   <div id="s1" class="slide title-slide active">
     <div>
-      <div class="pill">Trabalho 2 - Redes de Computadores</div>
-      <h1>SSH</h1>
-      <p class="subtitle">Secure Shell</p>
+      <div class="pill">Trabalho 2 · Redes de Computadores</div>
+      <h1>FTP · SSH · SNTP</h1>
+      <p class="subtitle">Três serviços de aplicação, ao vivo, no Wireshark</p>
       <div class="div"></div>
-      <p class="muted">RFC 4251 . 4252 . 4253 . 4254 | Protocolo SSH-2</p>
+      <p class="muted">Um laboratório em Docker · dois terminais + Wireshark · ~20 min</p>
     </div>
   </div>
 
-  <!-- SLIDE 2: Context / History -->
-  <div id="s2" class="slide">
-    <h3>Contexto</h3>
-    <h2>O problema antes do SSH</h2>
-    <div class="grid g2">
-      <div class="card">
-        <h4>Telnet e rlogin (antes de 1995)</h4>
-        <p>Login, senha e comandos viajavam em <strong>TEXTO CLARO</strong>. Qualquer pessoa na rede capturava tudo com um sniffer.</p>
-      </div>
-      <div class="card">
-        <h4>SSH (1995, Tatu Ylonen)</h4>
-        <p>Criado na Finlandia apos um ataque de sniffing. Cifra o canal inteiro desde o primeiro byte.</p>
-      </div>
+  <!-- ===================== SSH ===================== -->
+
+  <!-- 2 SSH intro -->
+  <div id="s2" class="slide title-slide">
+    <div>
+      <div class="pill" style="background:#8957e5">Bloco 1 de 3</div>
+      <h1>SSH</h1>
+      <p class="subtitle">Secure Shell: acesso remoto cifrado (porta 22)</p>
+      <div class="div"></div>
+      <p class="muted">Antes dele, o <strong style="color:var(--red)">Telnet</strong> mandava login, senha e comandos em <em>texto claro</em>. O SSH cifra o canal inteiro desde o primeiro byte.</p>
     </div>
-    <div class="cl warn">
-      <span class="cl-tx">Em 1995 a senha de Tatu Ylonen foi capturada por um sniffer na rede universitaria. Ele criou o SSH em resposta.</span>
-    </div>
-    <p class="muted">SSH-1 (1995) tinha vulnerabilidades. SSH-2 (2006, RFCs 4251-4254) e a versao atual.</p>
   </div>
 
-  <!-- SLIDE 3: What SSH solves -->
+  <!-- 3 SSH teoria -->
   <div id="s3" class="slide">
-    <h3>Para que serve</h3>
-    <h2>Usos do SSH</h2>
+    <h3>Teoria · SSH</h3>
+    <h2>O que é, quando usar, pontos principais</h2>
     <div class="grid g3">
-      <div class="card">
-        <h4>Shell remoto</h4>
-        <p>Acesso ao terminal de qualquer servidor, de qualquer lugar.</p>
-      </div>
-      <div class="card">
-        <h4>SCP e SFTP</h4>
-        <p>Transferencia de arquivos cifrada sobre o mesmo canal.</p>
-      </div>
-      <div class="card">
-        <h4>Tuneis</h4>
-        <p>Redirecionar portas locais para o servidor. VPN basica pelo SSH.</p>
-      </div>
-      <div class="card">
-        <h4>Automacao CI/CD</h4>
-        <p>Deploy, scripts de infra, autenticado por chave sem senha.</p>
-      </div>
-      <div class="card">
-        <h4>Git (GitHub/GitLab)</h4>
-        <p><code>git clone git@github.com</code> usa SSH por baixo.</p>
-      </div>
-      <div class="card">
-        <h4>Administracao</h4>
-        <p>Linux, roteadores, switches, dispositivos embarcados.</p>
-      </div>
+      <div class="card"><h4>O que é</h4><p>Protocolo de rede (RFC 4251) para abrir um shell remoto ou transferir arquivos com <strong>toda a comunicação cifrada</strong>: senha, comandos, saídas e dados. Roda sobre TCP, normalmente na porta 22.</p></div>
+      <div class="card"><h4>Quando usar</h4><p>Administrar servidores remotos, executar comandos num host distante, copiar arquivos com segurança (<code>scp</code>/<code>sftp</code>) e criar túneis cifrados. É o substituto direto de Telnet, rsh e FTP em claro.</p></div>
+      <div class="card"><h4>Pontos principais</h4><p>Autenticação por <strong>senha</strong> ou <strong>par de chaves</strong> (pública/privada). O servidor prova sua identidade com uma <strong>chave de host</strong>, defesa contra man-in-the-middle. Um único canal TCP carrega tudo, já cifrado.</p></div>
     </div>
   </div>
 
-  <!-- SLIDE 4: Architecture -->
+  <!-- 4 CENÁRIO: as máquinas -->
   <div id="s4" class="slide">
-    <h3>Protocolo</h3>
-    <h2>Arquitetura em 3 camadas</h2>
-    <div class="grid" style="gap:14px">
-      <div class="card" style="border-left:3px solid var(--purple)">
-        <h4 style="color:var(--purple)">3. SSH Connection (RFC 4254)</h4>
-        <p>Multiplexa canais logicos: sessao interativa, SCP, port forwarding. Tudo na porta 22.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--blue)">
-        <h4>2. SSH User Authentication (RFC 4252)</h4>
-        <p>Dentro do canal cifrado, o cliente prova quem e: por senha, por chave publica.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--green)">
-        <h4 style="color:var(--green)">1. SSH Transport Layer (RFC 4253)</h4>
-        <p>Base: abre o TCP, negocia algoritmos, cifra o canal. O servidor tambem se autentica aqui pela chave de host.</p>
-      </div>
+    <h3>Cenário · antes de qualquer comando</h3>
+    <h2>Que máquinas eu estou acessando?</h2>
+    <p>Não é um servidor na nuvem nem outro PC da sala. São <strong>3 containers Docker</strong> rodando <em>dentro da minha própria máquina</em>, cada um simulando um servidor real:</p>
+    <div class="grid g3">
+      <div class="card srv"><h4>ssh-server</h4><p>Servidor SSH (Debian + OpenSSH). IP interno <code>172.30.0.10</code>.</p></div>
+      <div class="card srv"><h4>ftp-server</h4><p>Servidor FTP (vsftpd). IP interno <code>172.30.0.20</code>.</p></div>
+      <div class="card srv"><h4>ntp-server</h4><p>Servidor de horário (chrony). IP interno <code>172.30.0.30</code>.</p></div>
     </div>
+    <div class="cl info"><span class="cl-tx">Os três vivem numa rede Docker isolada chamada <code>labnet</code> (<code>172.30.0.0/24</code>), criada só para o lab. É como uma pequena rede privada dentro do meu computador.</span></div>
   </div>
 
-  <!-- SLIDE 5: Port 22 and networking -->
+  <!-- 5 CENÁRIO: como foram criadas -->
   <div id="s5" class="slide">
-    <h3>Rede</h3>
-    <h2>Porta 22 e acesso pelo mundo</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>Porta 22 e a porta well-known do SSH (IANA). Qualquer porta poderia ser usada; 22 e a padrao.</p>
-        <div class="cl info">
-          <span class="cl-tx">Na mesma rede local: <code>ssh labuser@192.168.1.100</code> - funciona se voce estiver conectado ao mesmo roteador ou VPN.</span>
-        </div>
-        <div class="cl ok">
-          <span class="cl-tx">Pela internet, de qualquer lugar do mundo: <code>ssh labuser@203.0.113.10</code> - basta o servidor ter um IP publico e a porta 22 acessivel. O protocolo e identico.</span>
-        </div>
-        <p class="muted">Atras de NAT: use port forwarding no roteador, uma VPN, ou servicos como Tailscale.</p>
-      </div>
-      <pre><span class="cm"># mesma rede local</span>
-ssh labuser@192.168.1.100
-
-<span class="cm"># internet (IP publico)</span>
-ssh labuser@203.0.113.10
-
-<span class="cm"># com porta diferente</span>
-ssh -p 2222 labuser@servidor.com
-
-<span class="cm"># nosso lab (container Docker)</span>
-<span class="cm"># 127.0.0.1:2222 -&gt; 172.30.0.10:22</span>
-ssh -p 2222 labuser@127.0.0.1</pre>
+    <h3>Cenário · como isso subiu</h3>
+    <h2>Como as máquinas foram criadas</h2>
+    <p>Tudo está descrito em <code>docker-compose.yml</code> (a "receita" dos 3 servidores) e sobe com <strong>um único comando</strong>:</p>
+    <pre><span class="cm"># na raiz do projeto, uma vez só, antes da apresentação</span>
+<span class="cd">make up</span>
+<span class="out">  → docker compose build + up   (constrói e liga os 3 containers)</span>
+<span class="out">  → gen_keys.sh                 (gera as chaves e configura meu SSH)</span></pre>
+    <div class="two">
+      <pre><span class="cm"># conferir que estão no ar</span>
+<span class="cd">docker compose ps</span>
+<span class="out">lab-ssh   Up   0.0.0.0:2222->22/tcp</span>
+<span class="out">lab-ftp   Up   0.0.0.0:21->21/tcp</span>
+<span class="out">lab-ntp   Up   0.0.0.0:123->123/udp</span></pre>
+      <div class="card cli"><h4>Terminal 2: o outro lado</h4><p>Deixo <code>docker logs -f lab-ssh</code> aberto num canto: a plateia vê o <em>servidor</em> registrando cada conexão em tempo real.</p></div>
     </div>
   </div>
 
-  <!-- SLIDE 6: ~/.ssh/config -->
+  <!-- 6 CENÁRIO: preciso estar na mesma rede? -->
   <div id="s6" class="slide">
-    <h3>Configuracao</h3>
-    <h2>O arquivo ~/.ssh/config</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>Sem um arquivo de configuracao, cada conexao exige digitar todos os parametros.</p>
-        <pre><span class="cm"># comando sem config:</span>
-ssh -p 2222 -i ~/.ssh/id_ed25519 \
-  -o IdentitiesOnly=yes \
-  labuser@127.0.0.1</pre>
-        <p>Com o arquivo <code>~/.ssh/config</code>, voce define aliases:</p>
-        <pre>ssh lab
-ssh maquina1</pre>
-        <div class="cl info">
-          <span class="cl-tx">O ssh_config do laboratorio ja esta configurado em <code>client/ssh_config</code> com o alias <strong>lab</strong>.</span>
-        </div>
-      </div>
-      <pre><span class="cm"># ~/.ssh/config</span>
+    <h3>Cenário · a dúvida mais comum</h3>
+    <h2>Preciso estar na mesma rede? Não.</h2>
+    <p>Os servidores rodam na <strong>minha máquina</strong>. Eu os acesso por <code>localhost</code> (<code>127.0.0.1</code>), em portas que o Docker <em>publica</em> do container para o host:</p>
+    <table>
+      <tr><th>Serviço</th><th>Porta no container</th><th>Porta no meu PC</th><th>Eu conecto em…</th></tr>
+      <tr><td>SSH</td><td>22</td><td><strong>2222</strong></td><td><code>localhost:2222</code></td></tr>
+      <tr><td>FTP</td><td>21 (+ dados)</td><td>21 (+ 21100-21110)</td><td><code>localhost:21</code></td></tr>
+      <tr><td>SNTP</td><td>123/udp</td><td>123/udp</td><td><code>localhost:123</code></td></tr>
+    </table>
+    <div class="cl warn"><span class="cl-tx">Por que SSH em <strong>2222</strong> e não 22? Porque a minha máquina já pode ter um SSH na 22. Mapear <code>2222→22</code> evita colisão. Esse "2222" fica escondido no arquivo de config: eu nunca digito a porta.</span></div>
+  </div>
 
-Host <span class="hi">lab</span>
+  <!-- 7 CENÁRIO: o primeiro acesso -->
+  <div id="s7" class="slide">
+    <h3>Cenário · o primeiro acesso</h3>
+    <h2>Como o 1º acesso foi preparado</h2>
+    <p>Ao rodar <code>make up</code>, o script <code>gen_keys.sh</code> deixou tudo pronto dos dois lados, <strong>uma vez só</strong>:</p>
+    <div class="two">
+      <div class="card cli"><h4>Na minha máquina (cliente)</h4><p>1. Gerou meu <strong>par de chaves</strong> <code>lab_ed25519</code>.<br>2. Guardou a identidade do servidor em <code>known_hosts</code>.<br>3. Adicionou 1 linha ao meu <code>~/.ssh/config</code> criando os apelidos <code>lab</code> e <code>lab-pass</code>.</p></div>
+      <div class="card srv"><h4>Dentro do servidor</h4><p>1. Recebeu minha <strong>chave pública</strong> em <code>authorized_keys</code>.<br>2. Ganhou <strong>chaves de host fixas</strong> (identidade estável).<br>3. Subiu o <code>sshd</code> ouvindo na porta 22.</p></div>
+    </div>
+    <div class="cl ok"><span class="cl-tx">Resultado: a partir daí o acesso é um comando curto. De <em>qualquer</em> pasta: <code>ssh lab</code>.</span></div>
+  </div>
+
+  <!-- 8 SSH dois lados -->
+  <div id="s8" class="slide">
+    <span class="sec">SSH</span>
+    <h2>Os dois lados do SSH, lado a lado</h2>
+    <div class="two">
+      <div>
+        <h3 style="color:var(--purple)">Dentro do servidor: <code>sshd_config</code></h3>
+        <pre><span class="cm"># quem o servidor É (anti-impostor)</span>
+<span class="hi">HostKey</span> /etc/ssh/ssh_host_ed25519_key
+<span class="cm"># métodos de login aceitos</span>
+<span class="hi">PubkeyAuthentication</span> yes
+<span class="hi">PasswordAuthentication</span> yes
+<span class="hi">AuthorizedKeysFile</span> .ssh/authorized_keys
+<span class="hi">PermitRootLogin</span> no</pre>
+      </div>
+      <div>
+        <h3 style="color:var(--green)">Minha máquina: <code>~/.ssh/config</code></h3>
+        <pre><span class="cm"># apelido "lab": guarda TODO o resto</span>
+<span class="hi">Host</span> lab
     HostName 127.0.0.1
     Port 2222
     User labuser
-    IdentityFile ~/.ssh/id_ed25519
-    IdentitiesOnly yes
-
-Host <span class="hi">maquina1</span>
-    HostName 192.168.1.100
-    Port 22
-    User ubuntu
-
-Host <span class="hi">producao</span>
-    HostName 203.0.113.10
-    Port 22
-    User deploy
-    IdentityFile ~/.ssh/id_deploy</pre>
-    </div>
-  </div>
-
-  <!-- SLIDE 7: Host key / MITM -->
-  <div id="s7" class="slide">
-    <h3>Identidade do Servidor</h3>
-    <h2>Chave de host: protecao contra MITM</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>Antes de voce se autenticar, o servidor prova quem e. Ele tem um par de chaves de host. O cliente salva a fingerprint em <code>~/.ssh/known_hosts</code>.</p>
-        <p>Se um impostor se passar pelo servidor com outra chave...</p>
-        <div class="cl danger">
-          <span class="cl-tx"><strong>REMOTE HOST IDENTIFICATION HAS CHANGED!</strong> O SSH bloqueia e alerta sobre possivel MITM.</span>
-        </div>
-        <div class="cl warn">
-          <span class="cl-tx">Aceitar <code>yes</code> na pergunta inicial sem verificar a fingerprint e um habito perigoso.</span>
-        </div>
+    IdentityFile ~/.../lab_ed25519</pre>
+        <p class="muted" style="margin-top:8px">Por isso o comando fica só <code>ssh lab</code>: host, porta, usuário e chave já moram no arquivo.</p>
       </div>
-      <pre><span class="cm"># Fingerprint da chave de host</span>
-ssh-keygen -lf ssh_host_ed25519_key.pub
-<span class="cd">256 SHA256:DsXYiKI5AeTjmf... (ED25519)</span>
-
-<span class="cm"># known_hosts do cliente (mesma fingerprint)</span>
-cat client/keys/known_hosts
-<span class="vl">[127.0.0.1]:2222 ssh-ed25519 AAAAC3Nz...</span>
-
-<span class="cm"># Na primeira conexao:</span>
-<span class="out">The authenticity of host '[127.0.0.1]:2222'
-can't be established.
-ED25519 fingerprint is SHA256:DsXY...
-Are you sure you want to continue (yes/no)?</span></pre>
     </div>
   </div>
 
-  <!-- SLIDE 8: Canal cifrado -->
-  <div id="s8" class="slide">
-    <h3>Criptografia</h3>
-    <h2>O canal cifrado</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card" style="border-left:3px solid var(--green)">
-          <h4 style="color:var(--green)">Confidencialidade</h4>
-          <p>Conteudo inelegivel para quem capturar os pacotes. Comandos, arquivos, senhas: nada pode ser lido.</p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--blue)">
-          <h4>Autenticidade</h4>
-          <p>Voce sabe com quem esta falando. A chave de host garante que nao e um impostor.</p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--purple)">
-          <h4 style="color:var(--purple)">Integridade</h4>
-          <p>Impossivel alterar um byte sem ser detectado. O SSH autentica cada pacote.</p>
-        </div>
-        <div class="cl info">
-          <span class="cl-tx">Como: antes de qualquer dado sensivel, cliente e servidor fazem uma troca matematica de chaves (Diffie-Hellman) e chegam ao mesmo segredo sem nunca transmiti-lo pela rede.</span>
-        </div>
-      </div>
-      <pre><span class="cm"># /etc/ssh/sshd_config (nosso lab)</span>
-
-<span class="cm"># Troca de chaves</span>
-KexAlgorithms <span class="vl">curve25519-sha256</span>
-
-<span class="cm"># Cifra do canal</span>
-Ciphers <span class="vl">chacha20-poly1305@openssh.com</span>
-
-<span class="cm"># Verificacao de integridade</span>
-MACs <span class="vl">hmac-sha2-512-etm@openssh.com</span></pre>
-    </div>
-  </div>
-
-  <!-- SLIDE 9: Method 1 - password -->
+  <!-- 9 SSH passo senha -->
   <div id="s9" class="slide">
-    <h3>Autenticacao</h3>
-    <h2>Metodo 1: Usuario e Senha</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>O metodo mais simples. O cliente envia usuario e senha dentro do canal ja cifrado.</p>
-        <div class="cl ok">
-          <span class="cl-tx">A senha <strong>NAO</strong> vai em texto claro. Ela viaja dentro do canal cifrado (diferente do Telnet e do FTP).</span>
-        </div>
-        <div class="cl danger">
-          <span class="cl-tx">Vulneravel a brute force: bots varrem a porta 22 da internet testando milhares de senhas por hora. Se a senha for fraca, e questao de tempo.</span>
-        </div>
-        <div class="cl warn">
-          <span class="cl-tx">Tambem vulneravel a phishing, reuso de senha e vazamentos de banco de dados.</span>
-        </div>
+    <span class="sec">SSH</span>
+    <h2><span class="step">Passo 1</span>Entrar por SENHA</h2>
+    <div class="two">
+      <div>
+        <pre><span class="cm"># minha máquina: pede a senha (labpass)</span>
+<span class="cd">ssh lab-pass</span>
+
+<span class="cm"># já dentro do servidor:</span>
+<span class="cd">hostname</span>   <span class="out">→ ssh-server</span>
+<span class="cd">whoami</span>     <span class="out">→ labuser</span>
+<span class="cd">exit</span></pre>
+        <div class="cl info" style="margin-top:12px"><span class="cl-tx">O apelido <code>lab-pass</code> desliga a chave de propósito, para o servidor <em>pedir a senha</em>: só para demonstrar o método.</span></div>
       </div>
-      <pre><span class="cm"># Login por senha</span>
-<span class="cm"># (vai pedir: labpass)</span>
-ssh -p 2222 labuser@127.0.0.1
-
-<span class="out">labuser@127.0.0.1's password: ****</span>
-
-<span class="cm"># Dentro do servidor</span>
-<span class="cd">labuser@ssh-server:~$</span> hostname
-<span class="out">ssh-server</span>
-<span class="cd">labuser@ssh-server:~$</span> whoami
-<span class="out">labuser</span>
-
-<span class="cm"># Log do servidor confirma:</span>
-<span class="hi">Accepted password for labuser</span></pre>
+      <div class="card srv"><h4>No outro lado (docker logs -f lab-ssh)</h4>
+        <pre><span class="out">Accepted <span class="hi">password</span> for labuser
+   from 172.30.0.1 port XXXXX ssh2</span></pre>
+        <p>A senha <strong>foi pedida</strong>, mas não viajou à vista: ela seguiu <em>dentro</em> do canal já cifrado. (No FTP, veremos, ela aparece em claro.)</p>
+      </div>
     </div>
   </div>
 
-  <!-- SLIDE 10: Key pair theory -->
+  <!-- 10 SSH passo chave + permissões -->
   <div id="s10" class="slide">
-    <h3>Autenticacao</h3>
-    <h2>O par de chaves assimetricas</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card" style="border-left:3px solid var(--red)">
-          <h4 style="color:var(--red)">Chave Privada</h4>
-          <p>Fica so na sua maquina. Nunca sai daqui. Idealmente protegida por passphrase. Path: <code>~/.ssh/id_ed25519</code></p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--green)">
-          <h4 style="color:var(--green)">Chave Publica</h4>
-          <p>Vai para o servidor, em <code>~/.ssh/authorized_keys</code>. Pode ser distribuida a vontade. Sozinha nao serve para nada.</p>
-        </div>
-        <div class="cl info">
-          <span class="cl-tx">Como funciona o login: servidor gera um desafio. Cliente assina com a privada. Servidor verifica com a publica. Nenhum segredo viaja pela rede. Imune a brute force.</span>
-        </div>
+    <span class="sec">SSH</span>
+    <h2><span class="step">Passo 2</span>Entrar por CHAVE (sem senha)</h2>
+    <div class="two">
+      <div>
+        <pre><span class="cm"># nenhuma senha é digitada</span>
+<span class="cd">ssh lab</span>
+<span class="cd">whoami</span>   <span class="out">→ labuser</span>
+<span class="cd">exit</span></pre>
+        <div class="card srv" style="margin-top:12px"><h4>No log do servidor</h4>
+        <pre><span class="out">Accepted <span class="hi">publickey</span> for labuser
+   ...ED25519 SHA256:ZUJt...ngn1M</span></pre></div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <pre><span class="cm"># Gerar um par ed25519</span>
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
-
-<span class="cm"># Ver a chave publica</span>
-cat ~/.ssh/id_ed25519.pub
-<span class="vl">ssh-ed25519 AAAAC3NzaC1lZD... labuser@maq</span>
-
-<span class="cm"># Instalar no servidor</span>
-ssh-copy-id -i ~/.ssh/id_ed25519.pub user@servidor
-
-<span class="cm"># O que vai para authorized_keys:</span>
-<span class="cd">ssh-ed25519 AAAAC3NzaC1lZD... labuser@maq</span></pre>
-        <p class="muted">Ed25519 usa curva eliptica. Mais seguro e rapido que RSA para o mesmo nivel de protecao.</p>
+      <div>
+        <p><strong>Como funciona sem a senha viajar?</strong> Desafio-resposta: o servidor manda um número aleatório, eu <em>assino</em> com a chave privada, ele <em>confere</em> com a pública. O segredo nunca sai da minha máquina.</p>
+        <div class="cl warn" style="margin-top:10px"><span class="cl-tx">O SSH é exigente com permissões: <code>700</code> na pasta <code>.ssh</code> e <code>600</code> no <code>authorized_keys</code>. Se estiver frouxo (ex.: 777), o servidor <em>recusa</em> a chave: assim nenhum outro usuário pode editar quem entra como você.</span></div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 11: Method 2 - public key -->
+  <!-- 11 SSH scp -->
   <div id="s11" class="slide">
-    <h3>Autenticacao</h3>
-    <h2>Metodo 2: Chave Publica</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>Com a chave publica instalada no servidor, o login acontece sem digitar senha.</p>
-        <div class="cl ok">
-          <span class="cl-tx"><strong>Imune a brute force:</strong> nao ha senha para adivinhar. Nenhum segredo trafega.</span>
-        </div>
-        <div class="cl ok">
-          <span class="cl-tx"><strong>Permite automacao:</strong> scripts, CI/CD, deploy sem senha hard-coded.</span>
-        </div>
-        <div class="cl ok">
-          <span class="cl-tx"><strong>Um par de chaves, varios servidores:</strong> a mesma chave publica instalada em dezenas de maquinas.</span>
-        </div>
-      </div>
-      <pre><span class="cm"># Login por chave (sem senha)</span>
-ssh -F client/ssh_config lab
+    <span class="sec">SSH</span>
+    <h2><span class="step">Passo 3</span>Transferir arquivo: SCP</h2>
+    <pre><span class="cm"># enviar (minha máquina → servidor). Repare: mesmo apelido "lab"</span>
+<span class="cd">echo "arquivo cifrado de ponta a ponta" > /tmp/oi.txt</span>
+<span class="cd">scp /tmp/oi.txt lab:</span>              <span class="out"># "lab:" = o lado remoto</span>
 
-<span class="out">Welcome to Debian GNU/Linux 12</span>
-<span class="cd">labuser@ssh-server:~$</span>
-
-<span class="cm"># Log do servidor:</span>
-<span class="hi">Accepted publickey for labuser</span>
-<span class="out">ED25519 SHA256:jejldHgbSLC...</span>
-
-<span class="cm"># Verificar a fingerprint aceita:</span>
-ssh-keygen -lf client/keys/lab_ed25519.pub
-<span class="cd">256 SHA256:jejldHgbSLC... (ED25519)</span></pre>
-    </div>
+<span class="cm"># confirmar e baixar de volta</span>
+<span class="cd">ssh lab 'cat oi.txt'</span>
+<span class="cd">scp lab:oi.txt /tmp/volta.txt</span></pre>
+    <div class="cl ok"><span class="cl-tx">O <code>scp</code> reaproveita o apelido <code>lab</code>: comando curtíssimo, e tudo roda dentro do SSH, na <strong>mesma porta cifrada</strong>. Nenhuma porta nova de firewall: diferente do FTP, que veremos precisar de duas.</span></div>
   </div>
 
-  <!-- SLIDE 12: Permissions -->
+  <!-- 12 SSH wireshark (o método, contado uma vez) -->
   <div id="s12" class="slide">
-    <h3>Seguranca em Disco</h3>
-    <h2>Permissoes: o SSH recusa chaves erradas</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>O sshd rejeita autenticacao por chave se as permissoes estiverem incorretas. Motivo: outro usuario do sistema poderia editar o authorized_keys e entrar como voce.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Caminho</th>
-              <th>Permissao</th>
-              <th>Significa</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>~/.ssh/</code></td>
-              <td><strong>700</strong></td>
-              <td>so o dono entra no diretorio</td>
-            </tr>
-            <tr>
-              <td><code>authorized_keys</code></td>
-              <td><strong>600</strong></td>
-              <td>so o dono le e escreve</td>
-            </tr>
-            <tr>
-              <td>chave privada</td>
-              <td><strong>600</strong></td>
-              <td>so o dono le e escreve</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="cl warn">
-          <span class="cl-tx">Experimento ao vivo: <code>chmod 777 ~/.ssh/authorized_keys</code> e o SSH recusa a chave.</span>
-        </div>
-      </div>
-      <pre><span class="cm"># Verificar permissoes no servidor</span>
-stat -c "%a  %n" ~/.ssh ~/.ssh/authorized_keys
-<span class="hi">700  /home/labuser/.ssh</span>
-<span class="hi">600  /home/labuser/.ssh/authorized_keys</span>
-
-<span class="cm"># Com permissao incorreta (777):</span>
-chmod 777 ~/.ssh/authorized_keys
-ssh labuser@servidor
-<span class="out">Authentication failed.</span>
-<span class="cm"># sshd rejeita silenciosamente</span>
-
-<span class="cm"># Corrigir:</span>
-chmod 600 ~/.ssh/authorized_keys</pre>
-    </div>
-  </div>
-
-  <!-- SLIDE 13: SCP / SFTP -->
-  <div id="s13" class="slide">
-    <h3>Transferencia de Arquivos</h3>
-    <h2>SCP e SFTP: arquivos sobre o SSH</h2>
-    <div class="grid g2" style="align-items:start">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <p>SCP e SFTP rodam dentro do SSH: mesma porta 22, mesma criptografia. Sem abrir nova porta no firewall.</p>
-        <div class="card">
-          <h4>SCP</h4>
-          <p>Copia simples, estilo <code>cp</code>. Um comando, arquivo copiado.</p>
-        </div>
-        <div class="card">
-          <h4>SFTP</h4>
-          <p>Sessao interativa com <code>put</code>, <code>get</code>, <code>ls</code>, <code>rm</code>. Interface tipo FTP mas completamente cifrada.</p>
-        </div>
-        <div class="cl warn">
-          <span class="cl-tx"><strong>SFTP nao e FTPS.</strong> SFTP e um subsistema do SSH (porta 22, 1 canal). FTPS e FTP com TLS (porta 21 + canal de dados). Nomes parecidos, arquiteturas diferentes.</span>
-        </div>
-      </div>
-      <pre><span class="cm"># Enviar arquivo: LOCAL para REMOTO</span>
-scp -P 2222 -i client/keys/lab_ed25519 \
-  /tmp/relatorio.txt \
-  labuser@127.0.0.1:/home/labuser/
-
-<span class="cm"># Baixar arquivo: REMOTO para LOCAL</span>
-scp -P 2222 -i client/keys/lab_ed25519 \
-  labuser@127.0.0.1:/home/labuser/arquivo.txt \
-  /tmp/
-
-<span class="cm"># SFTP interativo</span>
-sftp -F client/ssh_config lab
-<span class="cd">sftp&gt;</span> ls
-<span class="cd">sftp&gt;</span> put /tmp/relatorio.txt
-<span class="cd">sftp&gt;</span> get relatorio.txt /tmp/
-<span class="cd">sftp&gt;</span> bye</pre>
-    </div>
-  </div>
-
-  <!-- SLIDE 14: Wireshark -->
-  <div id="s14" class="slide">
-    <h3>Analise de Trafego</h3>
-    <h2>SSH no Wireshark</h2>
+    <span class="sec">SSH</span>
+    <h2>No Wireshark: o que vaza × o que não vaza</h2>
+    <p class="muted">Interface <code>Loopback (lo)</code> · filtro de captura <code>tcp port 2222</code> · filtro de exibição <code>ssh</code></p>
     <table>
-      <thead>
-        <tr>
-          <th>Pacote</th>
-          <th>O que contem</th>
-          <th>Visivel?</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>TCP SYN / SYN-ACK / ACK</td>
-          <td>Three-way handshake TCP</td>
-          <td><span class="tag tg">Sim</span></td>
-        </tr>
-        <tr>
-          <td>SSH Banner</td>
-          <td>Versao do cliente e servidor</td>
-          <td><span class="tag ty">Vaza versao</span></td>
-        </tr>
-        <tr>
-          <td>Key Exchange Init</td>
-          <td>Algoritmos negociados</td>
-          <td><span class="tag ty">Vaza lista</span></td>
-        </tr>
-        <tr>
-          <td>New Keys</td>
-          <td>Cifra ativada a partir daqui</td>
-          <td><span class="tag tg">Sim</span></td>
-        </tr>
-        <tr>
-          <td>Encrypted Packet</td>
-          <td>Autenticacao, comandos, arquivos</td>
-          <td><span class="tag tr">Nao: cifrado</span></td>
-        </tr>
-      </tbody>
+      <tr><th>Trecho da conexão</th><th>Contém</th><th>Visível?</th></tr>
+      <tr><td>Banner</td><td>versão: <code>SSH-2.0-OpenSSH_9.2</code></td><td><span class="tag ty">vaza (aperto de mão)</span></td></tr>
+      <tr><td>Key Exchange Init</td><td>algoritmos oferecidos</td><td><span class="tag ty">vaza (aperto de mão)</span></td></tr>
+      <tr><td><code>Encrypted Packet</code></td><td>senha, comandos, arquivos</td><td><span class="tag tg">cifrado, ruído</span></td></tr>
     </table>
-    <div class="grid g2">
-      <div class="cl ok">
-        <span class="cl-tx">Senha, comandos digitados, conteudo de arquivos: nada pode ser lido.</span>
-      </div>
-      <div class="cl info">
-        <span class="cl-tx">Filtro Wireshark: <code>tcp.port==2222 &amp;&amp; ssh</code> - Interface Loopback, filtro de captura: <code>tcp port 2222</code></span>
-      </div>
-    </div>
+    <div class="cl info"><span class="cl-tx"><strong>Frase para a banca:</strong> só o handshake (versão + algoritmos) é legível, porque a cifra ainda não ligou; <em>tudo depois disso</em> é <code>Encrypted Packet</code>. Guarde este método: vamos comparar com o FTP.</span></div>
   </div>
 
-  <!-- SLIDE 15: Hardening -->
-  <div id="s15" class="slide">
-    <h3>Boas Praticas</h3>
-    <h2>Hardening SSH em producao</h2>
-    <div class="grid g2" style="align-items:start">
-      <pre><span class="cm"># /etc/ssh/sshd_config (producao)</span>
-
-<span class="cm"># Nunca root diretamente</span>
-<span class="hi">PermitRootLogin no</span>
-
-<span class="cm"># So chave publica, sem senha</span>
-<span class="hi">PasswordAuthentication no</span>
-
-<span class="cm"># Bloqueia brute force rapidamente</span>
-<span class="hi">MaxAuthTries 3</span>
-LoginGraceTime 20
-
-<span class="cm"># Whitelist de usuarios</span>
-AllowUsers <span class="vl">deploy jenkins</span>
-
-<span class="cm"># Algoritmos modernos</span>
-KexAlgorithms <span class="vl">curve25519-sha256</span>
-Ciphers <span class="vl">chacha20-poly1305@openssh.com</span>
-MACs <span class="vl">hmac-sha2-512-etm@openssh.com</span></pre>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card">
-          <h4>fail2ban</h4>
-          <p>Bane automaticamente IPs apos N tentativas falhas. Essencial para porta 22 publica.</p>
-        </div>
-        <div class="card">
-          <h4>Firewall</h4>
-          <p>Libera porta 22 so de IPs especificos. <code>ufw allow from IP to any port 22</code></p>
-        </div>
-        <div class="card">
-          <h4>Passphrase na chave privada</h4>
-          <p>Se a chave for roubada, ainda esta protegida. Use: <code>ssh-keygen -p</code></p>
-        </div>
-      </div>
-    </div>
+  <!-- 13 SSH anti-MITM -->
+  <div id="s13" class="slide">
+    <span class="sec">SSH</span>
+    <h2>A identidade do servidor (anti man-in-the-middle)</h2>
+    <p>Antes de <em>eu</em> provar quem sou, o <strong>servidor</strong> prova quem ele é, com sua <strong>chave de host</strong>. Na 1ª conexão o cliente salva a impressão digital em <code>known_hosts</code>:</p>
+    <pre><span class="cd">ssh-keygen -lf client/keys/host/ssh_host_ed25519_key.pub</span>
+<span class="out">256 SHA256:/W+H77VCKqG87X9jI...HP9aPM  (ED25519)</span></pre>
+    <div class="cl danger"><span class="cl-tx">Se amanhã um impostor responder com <em>outra</em> chave, o SSH bloqueia com <strong>"REMOTE HOST IDENTIFICATION HAS CHANGED"</strong>. É a defesa contra alguém se passar pelo servidor no meio do caminho.</span></div>
   </div>
 
-  <!-- SLIDE 16: Demo -->
-  <div id="s16" class="slide title-slide">
+  <!-- ===================== FTP ===================== -->
+
+  <!-- 14 FTP intro -->
+  <div id="s14" class="slide title-slide">
     <div>
-      <div class="pill">Demonstracao ao vivo</div>
-      <h1>Demo</h1>
-      <div class="div" style="background:var(--green)"></div>
-      <p class="muted">make ssh</p>
-      <p class="muted" style="font-size:.82rem;margin-top:8px">Terminal 2: docker logs -f lab-ssh</p>
-    </div>
-  </div>
-
-  <!-- SLIDE 17: Limitations -->
-  <div id="s17" class="slide">
-    <h3>Limitacoes do Experimento</h3>
-    <h2>O que ficou de fora</h2>
-    <ul>
-      <li>Tudo em loopback (<code>127.0.0.1</code>): em um cenario real, cliente e servidor estao em maquinas diferentes em redes distintas.</li>
-      <li><code>PasswordAuthentication yes</code>: mantivemos para demonstrar os dois metodos. Em producao: so chave mais <code>PasswordAuthentication no</code>.</li>
-      <li>Passphrase na chave privada: a chave do lab nao tem passphrase para facilitar a demonstracao. Em producao, proteja a chave privada.</li>
-      <li>Sem fail2ban e firewall: itens de producao fora do escopo do lab.</li>
-      <li>Sem port forwarding nem VPN: o acesso pela internet exige configuracao de rede no roteador ou servico de tunelamento.</li>
-    </ul>
-  </div>
-
-  <!-- SLIDE 18: Conclusion -->
-  <div id="s18" class="slide title-slide">
-    <div>
-      <h3 style="text-align:center;margin-bottom:8px">Conclusao</h3>
-      <h1>SSH resolve o acesso remoto seguro.</h1>
+      <div class="pill" style="background:#1f6feb">Bloco 2 de 3</div>
+      <h1>FTP</h1>
+      <p class="subtitle">File Transfer Protocol: RFC 959 (1985), porta 21</p>
       <div class="div"></div>
-      <div class="grid g3" style="max-width:850px;margin:0 auto;text-align:left">
-        <div class="card">
-          <h4>Canal cifrado</h4>
-          <p>Ninguem na rede le seus comandos ou arquivos.</p>
-        </div>
-        <div class="card">
-          <h4>Chave publica</h4>
-          <p>Sem segredo viajando pela rede. Imune a brute force.</p>
-        </div>
-        <div class="card">
-          <h4>Tudo na porta 22</h4>
-          <p>Shell, SCP, SFTP, tuneis. Um unico canal cifrado.</p>
-        </div>
+      <p class="muted">Marca registrada: usa <strong>dois canais TCP</strong>, um de controle e um de dados. E, no FTP puro, <em style="color:var(--red)">tudo vai em texto claro</em>.</p>
+    </div>
+  </div>
+
+  <!-- 15 FTP teoria -->
+  <div id="s15" class="slide">
+    <h3>Teoria · FTP</h3>
+    <h2>O que é, quando usar, pontos principais</h2>
+    <div class="grid g3">
+      <div class="card"><h4>O que é</h4><p>Um dos protocolos mais antigos da internet (RFC 959, 1985) para transferir arquivos entre cliente e servidor: enviar (<code>STOR</code>), baixar (<code>RETR</code>) e listar (<code>LIST</code>) diretórios remotos.</p></div>
+      <div class="card"><h4>Quando usar</h4><p>Hoje, majoritariamente em redes internas controladas ou sistemas legados. Fora desses casos, prefira <strong>FTPS</strong> ou <strong>SFTP</strong>, que cifram o que o FTP puro deixa exposto.</p></div>
+      <div class="card"><h4>Pontos principais</h4><p>Usa <strong>dois canais TCP</strong> (controle na porta 21, dados numa porta separada), tem modos <strong>ativo</strong> e <strong>passivo</strong>, e autentica com usuário/senha <strong>em texto claro</strong> por padrão.</p></div>
+    </div>
+  </div>
+
+  <!-- 16 FTP dois canais / passivo -->
+  <div id="s16" class="slide">
+    <span class="sec">FTP</span>
+    <h2>Dois canais e o modo passivo</h2>
+    <div class="two">
+      <div class="card"><h4>Canal de CONTROLE (porta 21)</h4><p>Comandos e respostas: <code>USER</code>, <code>PASS</code>, <code>LIST</code>, <code>RETR</code> (baixar), <code>STOR</code> (enviar), <code>PASV</code>.</p></div>
+      <div class="card"><h4>Canal de DADOS (porta separada)</h4><p>O conteúdo do arquivo viaja por <em>outra</em> conexão, numa porta da faixa <code>21100-21110</code>.</p></div>
+    </div>
+    <table>
+      <tr><th>Modo</th><th>Quem abre o canal de dados</th><th>Problema</th></tr>
+      <tr><td>Ativo</td><td>o <strong>servidor</strong> conecta de volta ao cliente</td><td>quebra com NAT/firewall do cliente</td></tr>
+      <tr><td><strong>Passivo (PASV)</strong></td><td>o <strong>cliente</strong> conecta ao servidor</td><td>funciona hoje, é o que usamos</td></tr>
+    </table>
+    <div class="cl info"><span class="cl-tx">Fixamos a faixa <code>21100-21110</code> para o Docker conseguir mapeá-la. Sem isso, o servidor sortearia qualquer porta alta e o NAT não saberia encaminhar.</span></div>
+  </div>
+
+  <!-- 17 FTP passo curl + risco -->
+  <div id="s17" class="slide">
+    <span class="sec">FTP</span>
+    <h2><span class="step">Ao vivo</span>Conectar, enviar e ver o risco</h2>
+    <pre><span class="cm"># o -v mostra o diálogo do protocolo: "&gt;" é meu comando, "&lt;" a resposta</span>
+<span class="cd">curl -v --ftp-pasv -u ftpuser:ftppass ftp://127.0.0.1/</span>
+<span class="out">&lt; 220 pronto     &gt; USER ftpuser   &lt; 331 peça senha</span>
+<span class="rd">&gt; PASS ftppass</span>  <span class="out">&lt; 230 logado    &lt; 227 entrando em passivo</span>
+
+<span class="cm"># enviar e baixar um arquivo</span>
+<span class="cd">curl -T upload.txt ftp://ftpuser:ftppass@127.0.0.1/upload.txt</span>
+<span class="cd">curl ftp://ftpuser:ftppass@127.0.0.1/exemplo.txt -o baixado.txt</span></pre>
+    <div class="cl danger"><span class="cl-tx"><code>USER ftpuser</code> e <code>PASS ftppass</code>, e o conteúdo dos arquivos, trafegam <strong>SEM criptografia</strong>. No Wireshark, filtro <code>ftp</code> mostra a senha legível; <code>ftp-data</code> mostra o arquivo. É o método do SSH ao contrário: aqui <em>tudo</em> vaza.</span></div>
+  </div>
+
+  <!-- 18 FTP permissões + modernas -->
+  <div id="s18" class="slide">
+    <span class="sec">FTP</span>
+    <h2>Isolamento e as versões seguras</h2>
+    <div class="two">
+      <div>
+        <h3>Confinamento no servidor</h3>
+        <pre><span class="cd">docker compose exec ftp \
+  ls -la /home/ftpuser</span></pre>
+        <p class="muted" style="margin-top:8px"><code>chroot</code> prende o usuário no próprio home: ele não enxerga o resto do sistema. <code>umask 022</code> → arquivos <code>644</code> (dono escreve, outros só leem).</p>
       </div>
-      <p class="muted" style="margin-top:28px">RFC 4251 . 4252 . 4253 . 4254 | make up &amp;&amp; make ssh</p>
+      <div>
+        <h3>Substitutos modernos</h3>
+        <div class="card"><h4>FTPS</h4><p>FTP + TLS: cifra os dois canais. Ainda é FTP por baixo (2 canais, porta 21).</p></div>
+        <div class="card"><h4>SFTP</h4><p><strong>Não é FTP.</strong> É transferência dentro do <em>SSH</em> (porta 22, um canal só). Nomes parecidos, arquiteturas diferentes.</p></div>
+      </div>
+    </div>
+    <div class="cl warn"><span class="cl-tx">Mantivemos o FTP em claro <strong>de propósito</strong>: é o que deixa a senha visível no Wireshark e prova por que o FTP puro está obsoleto.</span></div>
+  </div>
+
+  <!-- ===================== SNTP ===================== -->
+
+  <!-- 19 SNTP intro -->
+  <div id="s19" class="slide title-slide">
+    <div>
+      <div class="pill" style="background:#238636">Bloco 3 de 3</div>
+      <h1>SNTP</h1>
+      <p class="subtitle">Simple Network Time Protocol: RFC 4330, porta 123/UDP</p>
+      <div class="div"></div>
+      <p class="muted">Mantém relógios sincronizados com precisão de <strong>milissegundos</strong>. Nosso cliente (<code>sntp_client.py</code>) foi escrito do zero, só com a biblioteca padrão.</p>
+    </div>
+  </div>
+
+  <!-- 20 SNTP teoria -->
+  <div id="s20" class="slide">
+    <h3>Teoria · SNTP</h3>
+    <h2>O que é, quando usar, pontos principais</h2>
+    <div class="grid g3">
+      <div class="card"><h4>O que é</h4><p>Versão simplificada do NTP (RFC 4330) para sincronizar o relógio de um host consultando um servidor de tempo pela rede, com precisão típica de milissegundos.</p></div>
+      <div class="card"><h4>Quando usar</h4><p>Quando um cliente só precisa <em>consultar</em> a hora (não atuar como servidor hierárquico para outros): sistemas embarcados, scripts simples, clientes que não vão operar um daemon completo de NTP.</p></div>
+      <div class="card"><h4>Pontos principais</h4><p>Roda sobre <strong>UDP</strong> na porta 123, organiza servidores em <strong>estratos (stratum)</strong>, usa <strong>4 timestamps</strong> por troca para calcular offset e delay, e não autentica o servidor por padrão.</p></div>
+    </div>
+  </div>
+
+  <!-- 21 SNTP porta/UDP + stratum -->
+  <div id="s21" class="slide">
+    <span class="sec">SNTP</span>
+    <h2>Por que UDP, e a hierarquia de stratum</h2>
+    <div class="two">
+      <div>
+        <p><strong>Por que UDP (não TCP)?</strong> É uma troca curta pergunta/resposta. O 3-way handshake do TCP adicionaria atraso e <em>distorceria a medição do tempo</em>. Se um pacote se perde, é barato perguntar de novo.</p>
+        <pre style="margin-top:10px"><span class="cd">docker compose exec ntp chronyc tracking</span>
+<span class="cd">docker compose exec ntp chronyc sources -v</span></pre>
+      </div>
+      <div class="card"><h4>Stratum = distância da fonte</h4>
+        <p><strong>0</strong> = relógios de referência (atômico, GPS).<br><strong>1</strong> = ligados direto a eles.<br><strong>2, 3…</strong> = sincronizam com o nível acima.<br>Quanto <em>maior</em> o número, mais longe da fonte. Nosso chrony busca o <code>pool.ntp.org</code> e vira stratum N+1.</p></div>
+    </div>
+  </div>
+
+  <!-- 22 SNTP pacote + 4 timestamps -->
+  <div id="s22" class="slide">
+    <span class="sec">SNTP</span>
+    <h2>O pacote de 48 bytes e os 4 timestamps</h2>
+    <pre><span class="cd">cd client && uv run sntp_client.py --server 127.0.0.1 --raw</span></pre>
+    <div class="two">
+      <div class="card"><h4>Os 4 carimbos de tempo</h4>
+        <p><code>t1</code> cliente ENVIOU · <code>t2</code> servidor RECEBEU<br><code>t3</code> servidor RESPONDEU · <code>t4</code> cliente RECEBEU</p></div>
+      <div class="card"><h4>O cálculo</h4>
+        <p><strong>offset</strong> = ((t2−t1)+(t3−t4))/2 → quanto meu relógio está adiantado/atrasado<br><strong>delay</strong> = (t4−t1)−(t3−t2) → ida e volta na rede</p></div>
+    </div>
+    <div class="cl info"><span class="cl-tx">Assumindo ida ≈ volta, o <em>offset cancela a latência da rede</em>. É por isso que dá para acertar o relógio com precisão de ms mesmo com a rede no meio.</span></div>
+  </div>
+
+  <!-- 23 SNTP segurança -->
+  <div id="s23" class="slide">
+    <span class="sec">SNTP</span>
+    <h2>Segurança: o NTP básico não autentica</h2>
+    <p>O SNTP/NTP clássico <strong>não verifica a identidade do servidor</strong>. Um atacante na rede pode responder com hora falsa (<em>NTP spoofing</em>).</p>
+    <div class="cl danger"><span class="cl-tx">Mexer no relógio quebra muita coisa: validade de certificados TLS, logs, Kerberos, tokens TOTP, agendamentos…</span></div>
+    <div class="two">
+      <div class="card"><h4>Mitigação moderna</h4><p><strong>NTS</strong> (Network Time Security, RFC 8915): autentica o servidor via TLS.</p></div>
+      <div class="card"><h4>Consulta × sincronização</h4><p>Nosso cliente <em>consulta</em> e calcula o offset, mas <strong>não ajusta</strong> o relógio do host: isso é papel de um daemon (chronyd/ntpd) rodando continuamente.</p></div>
+    </div>
+  </div>
+
+  <!-- ===================== FECHAMENTO ===================== -->
+
+  <!-- 24 Comparativo -->
+  <div id="s24" class="slide">
+    <span class="sec">Fechamento</span>
+    <h2>Os três lado a lado</h2>
+    <table>
+      <tr><th>&nbsp;</th><th>SSH</th><th>FTP</th><th>SNTP</th></tr>
+      <tr><td><strong>Para quê</strong></td><td>shell + arquivos</td><td>transferir arquivos</td><td>hora certa</td></tr>
+      <tr><td><strong>Porta</strong></td><td>22 (aqui 2222)</td><td>21 + faixa de dados</td><td>123</td></tr>
+      <tr><td><strong>Transporte</strong></td><td>TCP · 1 canal</td><td>TCP · 2 canais</td><td>UDP · 1 troca</td></tr>
+      <tr><td><strong>Cifra o tráfego?</strong></td><td><span class="tag tg">Sim, tudo</span></td><td><span class="tag tr">Não (puro)</span></td><td><span class="tag tr">Não</span></td></tr>
+      <tr><td><strong>Autentica?</strong></td><td>senha + chave</td><td>usuário + senha (em claro)</td><td><span class="tag tr">Não (básico)</span></td></tr>
+      <tr><td><strong>Versão segura</strong></td><td>já é</td><td>FTPS / SFTP</td><td>NTS</td></tr>
+    </table>
+  </div>
+
+  <!-- 25 Referência rápida -->
+  <div id="s25" class="slide">
+    <span class="sec">Fechamento</span>
+    <h2>Referência rápida de comandos</h2>
+    <div class="two">
+      <pre><span class="cm"># SSH, de qualquer pasta</span>
+<span class="cd">ssh lab</span>            <span class="out"># por chave</span>
+<span class="cd">ssh lab-pass</span>       <span class="out"># por senha (labpass)</span>
+<span class="cd">scp /tmp/oi.txt lab:</span>
+<span class="cd">scp lab:oi.txt .</span>
+
+<span class="cm"># subir / logs</span>
+<span class="cd">make up</span>
+<span class="cd">docker logs -f lab-ssh</span></pre>
+      <pre><span class="cm"># FTP</span>
+<span class="cd">curl -v --ftp-pasv \
+  -u ftpuser:ftppass ftp://127.0.0.1/</span>
+
+<span class="cm"># SNTP</span>
+<span class="cd">cd client && uv run \
+  sntp_client.py --server 127.0.0.1</span>
+
+<span class="cm"># Wireshark (interface lo)</span>
+<span class="out">filtros: ssh | ftp | ftp-data | ntp</span></pre>
+    </div>
+  </div>
+
+  <!-- 26 Perguntas da banca -->
+  <div id="s26" class="slide">
+    <span class="sec">Fechamento</span>
+    <h2>Perguntas prováveis da banca</h2>
+    <div class="grid g2">
+      <div class="card"><h4>A senha no SSH vai em claro?</h4><p>Não, viaja dentro do canal já cifrado. Mas senha é método fraco (segredo compartilhado, sujeito a brute force); chave é melhor.</p></div>
+      <div class="card"><h4>E se a chave de host mudar?</h4><p>SSH bloqueia com "IDENTIFICATION HAS CHANGED" e aponta a linha do <code>known_hosts</code>. Você decide se é troca legítima ou MITM.</p></div>
+      <div class="card"><h4>Por que o FTP usa 2 canais?</h4><p>Herança de 1985: separa comandos (21) de dados. É o que torna o passivo/NAT complicado, e o SSH resolve tudo numa porta só.</p></div>
+      <div class="card"><h4>ed25519 vs RSA?</h4><p>ed25519 usa curva elíptica: chave menor (256 bits ≈ RSA 3072), mais rápida e robusta. Recomendada para sistemas novos.</p></div>
+      <div class="card"><h4>Por que NTP em UDP?</h4><p>Troca curta; o handshake do TCP atrasaria e distorceria a medição de tempo. Perda de pacote? Pergunta de novo.</p></div>
+      <div class="card"><h4>SFTP é o mesmo que FTPS?</h4><p>Não. SFTP é subsistema do SSH (porta 22, 1 canal). FTPS é FTP antigo embrulhado em TLS (porta 21, 2 canais).</p></div>
+    </div>
+  </div>
+
+  <!-- 27 Encerramento -->
+  <div id="s27" class="slide title-slide">
+    <div>
+      <h3 style="text-align:center;margin-bottom:8px">Conclusão</h3>
+      <h1>Mesma pergunta, três respostas.</h1>
+      <div class="div"></div>
+      <div class="grid g3" style="max-width:880px;margin:0 auto;text-align:left">
+        <div class="card srv"><h4>SSH</h4><p>Acesso remoto com o canal <em>inteiro</em> cifrado. Chave &gt; senha.</p></div>
+        <div class="card"><h4>FTP</h4><p>Simples e antigo, e por isso, em claro. Hoje: FTPS ou SFTP.</p></div>
+        <div class="card cli"><h4>SNTP</h4><p>Tempo preciso via 4 timestamps. Sem autenticação → NTS.</p></div>
+      </div>
+      <p class="muted" style="margin-top:26px">make up · dois terminais · Wireshark na interface <code>lo</code></p>
     </div>
   </div>
 
 </div>
 
-<div id="nav"><span id="counter">1 / 18</span><button class="nb" id="prev">&#x2039;</button><button class="nb" id="next">&#x203a;</button></div>
+<div id="nav"><span id="counter">1 / 24</span><button class="nb" id="prev">&#x2039;</button><button class="nb" id="next">&#x203a;</button></div>
 <div id="prog"></div>
 
 <script>

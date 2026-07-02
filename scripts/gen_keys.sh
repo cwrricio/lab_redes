@@ -40,8 +40,10 @@ echo "[127.0.0.1]:$PORT $HOSTKEY" > "$KEY_DIR/known_hosts"
 # 4) ssh_config -------------------------------------------------------------
 cat > client/ssh_config <<EOF
 # Gerado por scripts/gen_keys.sh — caminhos absolutos para este laboratório.
-# Uso:  ssh -F client/ssh_config lab        (login por CHAVE)
-#       ssh -F client/ssh_config lab-pass   (login por SENHA: labpass)
+# Este arquivo é incluído pelo seu ~/.ssh/config (linha "Include ...").
+# Uso (de QUALQUER pasta):
+#       ssh lab        (login por CHAVE)
+#       ssh lab-pass   (login por SENHA: labpass)
 
 # --- Login por CHAVE PÚBLICA (recomendado) ---
 Host lab
@@ -66,6 +68,32 @@ Host lab-pass
     StrictHostKeyChecking accept-new
 EOF
 echo "[keys] client/ssh_config gerado (aliases: lab, lab-pass)."
+
+# 5) Include no ~/.ssh/config -----------------------------------------------
+# Em vez de digitar 'ssh -F client/ssh_config lab', fazemos o SSH do usuário
+# enxergar os aliases do lab automaticamente. Só adicionamos UMA linha de
+# Include (idempotente); a config do lab continua morando no repositório.
+SSH_DIR="$HOME/.ssh"
+SSH_CONFIG="$SSH_DIR/config"
+INCLUDE_LINE="Include $ROOT/client/ssh_config"
+
+mkdir -p "$SSH_DIR"; chmod 700 "$SSH_DIR"
+if [ ! -f "$SSH_CONFIG" ]; then
+  touch "$SSH_CONFIG"; chmod 600 "$SSH_CONFIG"
+fi
+
+if grep -qxF "$INCLUDE_LINE" "$SSH_CONFIG"; then
+  echo "[keys] ~/.ssh/config já inclui o lab (nada a fazer)."
+else
+  cp "$SSH_CONFIG" "$SSH_CONFIG.bak.lab" 2>/dev/null || true
+  # Include precisa vir ANTES de qualquer bloco Host para valer sempre.
+  printf '%s\n%s\n\n%s' \
+    "# >>> lab_trab2_redes (SSH: 'ssh lab' / 'ssh lab-pass') >>>" \
+    "$INCLUDE_LINE" \
+    "$(cat "$SSH_CONFIG")" > "$SSH_CONFIG.tmp"
+  mv "$SSH_CONFIG.tmp" "$SSH_CONFIG"; chmod 600 "$SSH_CONFIG"
+  echo "[keys] Adicionada linha de Include ao ~/.ssh/config (backup em config.bak.lab)."
+fi
 
 echo
 echo "[keys] Fingerprints:"

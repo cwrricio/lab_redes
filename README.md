@@ -63,15 +63,15 @@ Depois de `make up`, os serviços ficam acessíveis assim:
 
 | Serviço | Endereço | Credenciais |
 |---|---|---|
-| **SSH**  | `ssh -F client/ssh_config lab` | chave `client/keys/lab_ed25519` (ou `lab-pass` → senha `labpass`) |
+| **SSH**  | `ssh lab` | chave `client/keys/lab_ed25519` (ou `ssh lab-pass` → senha `labpass`) |
 | **FTP**  | `127.0.0.1:21` (modo passivo) | usuário `ftpuser` / senha `ftppass` |
 | **SNTP** | `127.0.0.1:123/udp` | — |
 
-> **Por que `-F client/ssh_config`?** O arquivo (gerado por `gen_keys.sh`) já
-> traz porta, usuário, caminho da chave, `IdentitiesOnly yes` e o `known_hosts`
-> do lab. Sem ele, um `ssh -p 2222 labuser@127.0.0.1` "pelado" pode falhar com
-> **`Too many authentication failures`** porque o seu `ssh-agent` oferece
-> chaves demais antes da senha. O `ssh_config` resolve isso.
+> **Por que só `ssh lab`?** O `gen_keys.sh` gera `client/ssh_config` (com porta,
+> usuário, caminho da chave, `IdentitiesOnly yes` e o `known_hosts` do lab) e
+> adiciona uma linha `Include` ao seu `~/.ssh/config`. Assim os apelidos `lab` e
+> `lab-pass` funcionam de **qualquer pasta**, sem `-F`, `-p` nem `-o`. Some ao
+> apagar essa linha do `~/.ssh/config` (backup em `~/.ssh/config.bak.lab`).
 
 ---
 
@@ -259,7 +259,7 @@ valem como discussão:
    *capturar* a senha no Wireshark e mostrar o problema. Em produção usaria-se
    **FTPS** (`ssl_enable=YES` + certificado no vsftpd) ou, melhor ainda,
    **SFTP** — que não é FTP, e sim transferência sobre SSH (já disponível neste
-   lab via `sftp -F client/ssh_config lab`).
+   lab via `sftp lab`).
 2. **Senhas fracas e fixas.** `labpass`/`ftppass` são didáticas. Real: senhas
    fortes, ou só chave, com `PasswordAuthentication no`.
 3. **Sincronização vs. consulta de horário.** Nosso cliente SNTP **lê** a hora
@@ -288,7 +288,7 @@ valem como discussão:
 |---|---|
 | `make up` falha em "port is already allocated" | já há algo na 21/123/2222. Pare o serviço local ou edite as portas no `docker-compose.yml`. |
 | FTP conecta mas trava no `LIST`/download | modo ativo em vez de passivo, ou faixa `21100-21110` bloqueada. Use `curl --ftp-pasv` (já é o padrão do `lab_ftp.sh`). |
-| SSH: `Too many authentication failures` | o `ssh-agent` ofereceu chaves demais. Use `ssh -F client/ssh_config lab` (já fixa `IdentitiesOnly yes`). |
+| SSH: `Too many authentication failures` | o `ssh-agent` ofereceu chaves demais. Use `ssh lab` (o config do lab já fixa `IdentitiesOnly yes`). |
 | SSH: `REMOTE HOST IDENTIFICATION HAS CHANGED` | a chave de host mudou (recriou as chaves). Rode `bash scripts/gen_keys.sh` e `make up` de novo, ou apague a linha antiga do `client/keys/known_hosts`. |
 | SNTP: `timeout` | o container `lab-ntp` ainda está sincronizando. Aguarde alguns segundos (`docker logs lab-ntp`) e repita. |
 | `make capture` pede senha e nada acontece | `tcpdump` precisa de `sudo`. Rode num terminal interativo. |
