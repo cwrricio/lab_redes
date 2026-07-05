@@ -2,7 +2,7 @@
 FROM debian:12-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends vsftpd \
+    && apt-get install -y --no-install-recommends vsftpd ftp \
     && rm -rf /var/lib/apt/lists/*
 
 COPY vsftpd.conf /etc/vsftpd.conf

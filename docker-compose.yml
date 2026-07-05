@@ -44,7 +44,7 @@ services:
       # precisa ser o IP que o cliente enxerga (127.0.0.1 para acesso local).
       PASV_ADDRESS: 127.0.0.1
     ports:
-      - "21:21"              # canal de controle
+      - "2121:21"              # canal de controle
       - "21100-21110:21100-21110"   # canais de dados (modo passivo)
     volumes:
       - ./services/ftp/data:/home/ftpuser
