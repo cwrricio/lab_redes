@@ -67,9 +67,9 @@
     <div>
       <div class="pill">Trabalho 2 · Redes de Computadores</div>
       <h1>FTP · SSH · SNTP</h1>
-      <p class="subtitle">Três serviços de aplicação, ao vivo, no Wireshark</p>
+    
       <div class="div"></div>
-      <p class="muted">Um laboratório em Docker · dois terminais + Wireshark · ~20 min</p>
+      
     </div>
   </div>
 
@@ -230,14 +230,13 @@
   <div id="s11" class="slide">
     <span class="sec">SSH</span>
     <h2><span class="step">Passo 3</span>Transferir arquivo: SCP</h2>
-    <pre><span class="cm"># enviar (minha máquina → servidor). Repare: mesmo apelido "lab"</span>
+    <pre><span class="cm"># enviar (minha máquina → servidor)</span>
 <span class="cd">echo "arquivo cifrado de ponta a ponta" > /tmp/oi.txt</span>
-<span class="cd">scp /tmp/oi.txt lab:</span>              <span class="out"># "lab:" = o lado remoto</span>
+<span class="cd">scp -F client/ssh_config /tmp/oi.txt lab:/home/labuser/oi.txt</span>
 
-<span class="cm"># confirmar e baixar de volta</span>
-<span class="cd">ssh lab 'cat oi.txt'</span>
-<span class="cd">scp lab:oi.txt /tmp/volta.txt</span></pre>
-    <div class="cl ok"><span class="cl-tx">O <code>scp</code> reaproveita o apelido <code>lab</code>: comando curtíssimo, e tudo roda dentro do SSH, na <strong>mesma porta cifrada</strong>. Nenhuma porta nova de firewall: diferente do FTP, que veremos precisar de duas.</span></div>
+<span class="cm"># confirmar que chegou, do lado do servidor</span>
+<span class="cd">ssh -F client/ssh_config lab 'cat oi.txt'</span></pre>
+    <div class="cl ok"><span class="cl-tx">O <code>scp</code> reaproveita o apelido <code>lab</code> do <code>ssh_config</code>: tudo roda dentro do SSH, na <strong>mesma porta cifrada</strong>. Nenhuma porta nova de firewall: diferente do FTP, que veremos precisar de duas.</span></div>
   </div>
 
   <!-- 12 SSH wireshark (o método, contado uma vez) -->
@@ -251,7 +250,6 @@
       <tr><td>Key Exchange Init</td><td>algoritmos oferecidos</td><td><span class="tag ty">vaza (aperto de mão)</span></td></tr>
       <tr><td><code>Encrypted Packet</code></td><td>senha, comandos, arquivos</td><td><span class="tag tg">cifrado, ruído</span></td></tr>
     </table>
-    <div class="cl info"><span class="cl-tx"><strong>Frase para a banca:</strong> só o handshake (versão + algoritmos) é legível, porque a cifra ainda não ligou; <em>tudo depois disso</em> é <code>Encrypted Packet</code>. Guarde este método: vamos comparar com o FTP.</span></div>
   </div>
 
   <!-- 13 SSH anti-MITM -->

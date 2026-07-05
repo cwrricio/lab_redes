@@ -2,7 +2,7 @@
 # Atalhos para subir o ambiente e rodar os laboratórios guiados.
 
 .DEFAULT_GOAL := help
-.PHONY: help keys up down logs ps ssh ftp sntp demo capture clean
+.PHONY: help keys up down logs ps ssh ftp sntp demo capture clean reset
 
 help:  ## Mostra esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -47,3 +47,18 @@ capture:    ## Captura o tráfego das 3 demos em .pcap (requer sudo/tcpdump)
 
 clean: down  ## Derruba tudo e remove imagens/volumes do laboratório
 	docker compose down --rmi local --volumes --remove-orphans || true
+
+reset:  ## Reset TOTAL: containers, imagens, volumes, capturas, dados FTP e chaves geradas
+	@echo "==> Derrubando containers, imagens e volumes..."
+	@docker compose down --rmi local --volumes --remove-orphans || true
+	@echo "==> Removendo capturas (.pcap)..."
+	@rm -f captures/*.pcap
+	@echo "==> Limpando dados enviados ao FTP..."
+	@find services/ftp/data -mindepth 1 ! -name '.gitkeep' -delete
+	@echo "==> Removendo chaves e ssh_config gerados (client/keys, client/ssh_config)..."
+	@rm -rf client/keys client/ssh_config
+	@echo
+	@echo "==> Setup resetado como um clone novo. Rode 'make up' para recriar tudo."
+	@echo "    Nota: a linha 'Include .../client/ssh_config' em ~/.ssh/config NÃO"
+	@echo "    foi removida (é fora do repo). Se quiser tirá-la também, edite"
+	@echo "    ~/.ssh/config manualmente (há um backup em config.bak.lab)."
